@@ -1,3 +1,4 @@
+// src/services/orderService.ts
 import axios from 'axios';
 import { Order, CreateOrderRequest, UpdateOrderRequest, OrderStatus } from '@/types/order';
 
@@ -22,8 +23,8 @@ export const orderService = {
     return response.data;
   },
 
-  // Tạo order mới
-  async createOrder(orderData: CreateOrderRequest): Promise<Order> {
+  // Tạo order mới - SỬA ĐỂ LINH HOẠT VỚI GUEST CHECKOUT
+  async createOrder(orderData: CreateOrderRequest | any): Promise<Order> {
     const response = await axios.post(`${API_BASE}/orders`, orderData);
     return response.data;
   },
