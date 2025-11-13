@@ -15,7 +15,7 @@ interface CheckoutForm {
 }
 
 export default function CheckoutPage() {
-  const { state, clearCart, getCart } = useCart();
+  const { state, checkout, clearCart, getCart } = useCart();
   
   const [form, setForm] = useState<CheckoutForm>({
     name: '',
@@ -36,10 +36,12 @@ export default function CheckoutPage() {
   }, [getCart]);
 
   useEffect(() => {
-    if (state.items.length === 0 && !orderSuccess) {
-      window.location.href = '/store/cart';
-    }
-  }, [state.items, orderSuccess]);
+  // ✅ CHỈ redirect khi thực sự cần
+  if (state.items.length === 0 && !orderSuccess && !loading) {
+    console.log('🔄 Redirecting to cart because: empty cart, no success, not loading');
+    window.location.href = '/store/cart';
+  }
+}, [state.items, orderSuccess, loading]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -54,78 +56,57 @@ export default function CheckoutPage() {
     setLoading(true);
 
     try {
-      const sessionId = localStorage.getItem('cartSessionId');
-      const token = localStorage.getItem('token');
+      console.log('💰 [Checkout] Starting LOCAL checkout process');
 
-      console.log('[Checkout] LocalStorage check:', {
-        sessionId,
-        hasToken: !!token
-      });
-
-      // ✅ FIX QUAN TRỌNG: Đảm bảo luôn có sessionId
-      if (!sessionId) {
-        alert('Lỗi: Không tìm thấy session giỏ hàng. Vui lòng thêm sản phẩm vào giỏ trước.');
+      // VALIDATION
+      if (state.items.length === 0) {
+        alert('Giỏ hàng trống. Vui lòng thêm sản phẩm vào giỏ trước.');
         setLoading(false);
         return;
       }
 
-     
+      if (!form.name || !form.email || !form.phone || !form.shippingAddress) {
+        alert('Vui lòng điền đầy đủ thông tin bắt buộc (tên, email, số điện thoại, địa chỉ giao hàng)');
+        setLoading(false);
+        return;
+      }
 
-      // ✅ QUAN TRỌNG: Chỉ gửi thông tin form
-      const checkoutData = {
+      // ✅ SỬ DỤNG CART CONTEXT CHECKOUT (LOCAL)
+      const result = await checkout({
         ...form,
         billingAddress: form.billingAddress || form.shippingAddress
-      };
-
-      console.log('[Checkout] Sending checkout request:', {
-        hasToken: !!token,
-        hasSessionId: !!sessionId,
-        sessionId: sessionId, // ✅ LOG sessionId để debug
-        customer: form.name,
-        itemsInState: state.items.length // ✅ LOG số items trong state
       });
 
-      const response = await fetch('/api/cart/checkout', {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json',
-    'X-Session-ID': sessionId,
-    'Authorization': `Bearer ${token}`
-  },
-  body: JSON.stringify(checkoutData)
-});
-
-      console.log('[Checkout] Response status:', response.status);
-
-      if (response.ok) {
-        const result = await response.json();
-        console.log('[Checkout] Success:', result);
-        
-        setOrderData(result.data);
-        setOrderSuccess(true);
-        await clearCart();
-        
-        // ✅ Giữ lại sessionId để tiếp tục mua hàng
-        // KHÔNG xóa sessionId vì user có thể muốn tiếp tục mua hàng
-        
-      } else {
-        const errorResult = await response.json();
-        console.error('[Checkout] Error:', errorResult);
-        
-        // ✅ Hiển thị lỗi chi tiết hơn
-        if (errorResult.error === 'Cart is empty') {
-          alert('Giỏ hàng trống. Vui lòng thêm sản phẩm vào giỏ trước khi đặt hàng.');
-        } else {
-          alert(errorResult.error || errorResult.message || 'Có lỗi xảy ra khi đặt hàng');
-        }
-      }
-    } catch (error) {
-      console.error('[Checkout] Exception:', error);
-      alert('Có lỗi xảy ra khi đặt hàng. Vui lòng thử lại.');
+      console.log('✅ [Checkout] LOCAL checkout success:', result);
+      
+      setOrderData(result.order);
+      setOrderSuccess(true);
+      
+    } catch (error: any) {
+      console.error('❌ [Checkout] LOCAL checkout error:', error);
+      alert(error.message || 'Có lỗi xảy ra khi đặt hàng. Vui lòng thử lại.');
     } finally {
       setLoading(false);
     }
   };
+
+  // ✅ HELPER FUNCTION ĐỂ ĐẢM BẢO SỐ
+  const formatCurrency = (value: any): string => {
+    const num = Number(value);
+    return isNaN(num) ? '$0.00' : `$${num.toFixed(2)}`;
+  };
+
+  // ✅ TÍNH TOÁN TỔNG TIỀN
+  const calculateTotals = () => {
+    const subtotal = Number(state.total) || 0;
+    const shippingFee = subtotal > 100 ? 0 : 10;
+    const discount = subtotal > 100 ? 10 : 0;
+    const total = subtotal + shippingFee - discount;
+    
+    return { subtotal, shippingFee, discount, total };
+  };
+
+  const { subtotal, shippingFee, discount, total } = calculateTotals();
 
   if (orderSuccess && orderData) {
     return (
@@ -139,14 +120,38 @@ export default function CheckoutPage() {
           <div className="bg-white rounded-lg shadow-md p-6 mb-6 text-left">
             <h3 className="text-xl font-bold mb-4">Thông Tin Đơn Hàng</h3>
             <div className="space-y-2">
-              <p><strong>Mã đơn hàng:</strong> {orderData.orderNumber || orderData.id || 'N/A'}</p>
-              <p><strong>Khách hàng:</strong> {orderData.customerName || form.name}</p>
-              <p><strong>Email:</strong> {orderData.customerEmail || form.email}</p>
-              <p><strong>Số điện thoại:</strong> {orderData.customerPhone || form.phone}</p>
-              <p><strong>Tổng tiền:</strong> ${Number(orderData.totalAmount || 0)?.toFixed(2)}</p>
-              <p><strong>Phương thức thanh toán:</strong> {orderData.paymentMethod || form.paymentMethod}</p>
-              <p><strong>Địa chỉ giao hàng:</strong> {orderData.shippingAddress || form.shippingAddress}</p>
+              <p><strong>Mã đơn hàng:</strong> {orderData.id || 'N/A'}</p>
+              <p><strong>Khách hàng:</strong> {orderData.customerInfo?.name || form.name}</p>
+              <p><strong>Email:</strong> {orderData.customerInfo?.email || form.email}</p>
+              <p><strong>Số điện thoại:</strong> {orderData.customerInfo?.phone || form.phone}</p>
+              <p><strong>Tổng tiền:</strong> {formatCurrency(orderData.total)}</p>
+              <p><strong>Phương thức thanh toán:</strong> {orderData.customerInfo?.paymentMethod || form.paymentMethod}</p>
+              <p><strong>Địa chỉ giao hàng:</strong> {orderData.customerInfo?.shippingAddress || form.shippingAddress}</p>
               <p><strong>Trạng thái:</strong> {orderData.status || 'Đang xử lý'}</p>
+              <p><strong>Ngày đặt:</strong> {new Date(orderData.createdAt).toLocaleDateString('vi-VN')}</p>
+            </div>
+          </div>
+
+          {/* Order Items */}
+          <div className="bg-white rounded-lg shadow-md p-6 mb-6 text-left">
+            <h3 className="text-xl font-bold mb-4">Chi Tiết Đơn Hàng</h3>
+            <div className="space-y-3">
+              {orderData.items?.map((item: any) => (
+                <div key={item.id} className="flex justify-between items-center border-b pb-3">
+                  <div className="flex items-center space-x-3">
+                    <img 
+                      src={item.image} 
+                      alt={item.productName}
+                      className="w-12 h-12 object-cover rounded"
+                    />
+                    <div>
+                      <p className="font-medium">{item.productName}</p>
+                      <p className="text-sm text-gray-600">Số lượng: {item.quantity}</p>
+                    </div>
+                  </div>
+                  <p className="font-semibold">{formatCurrency(item.total)}</p>
+                </div>
+              ))}
             </div>
           </div>
 
@@ -285,7 +290,7 @@ export default function CheckoutPage() {
                 disabled={loading || state.items.length === 0}
                 className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition duration-200 font-semibold"
               >
-                {loading ? 'Đang xử lý...' : `Đặt Hàng - $${(state.total > 100 ? state.total : state.total + 10).toFixed(2)}`}
+                {loading ? 'Đang xử lý...' : `Đặt Hàng - ${formatCurrency(total)}`}
               </button>
             </form>
           </div>
@@ -300,9 +305,9 @@ export default function CheckoutPage() {
                   <div className="flex-1">
                     <p className="font-medium text-gray-800">{item.productName}</p>
                     <p className="text-sm text-gray-600">Số lượng: {item.quantity}</p>
-                    <p className="text-sm text-gray-500">${item.price.toFixed(2)}/sản phẩm</p>
+                    <p className="text-sm text-gray-500">{formatCurrency(item.price)}/sản phẩm</p>
                   </div>
-                  <p className="font-semibold text-gray-900">${item.total.toFixed(2)}</p>
+                  <p className="font-semibold text-gray-900">{formatCurrency(item.total)}</p>
                 </div>
               ))}
             </div>
@@ -310,33 +315,23 @@ export default function CheckoutPage() {
             <div className="space-y-2 border-t pt-4">
               <div className="flex justify-between text-gray-600">
                 <span>Tạm tính:</span>
-                <span>${state.total.toFixed(2)}</span>
+                <span>{formatCurrency(subtotal)}</span>
               </div>
               <div className="flex justify-between text-gray-600">
                 <span>Phí vận chuyển:</span>
-                <span>$10.00</span>
+                <span>{formatCurrency(shippingFee)}</span>
               </div>
-              {state.total > 100 && (
+              {discount > 0 && (
                 <div className="flex justify-between text-green-600">
                   <span>Giảm giá (đơn hàng &gt; $100):</span>
-                  <span>-$10.00</span>
+                  <span>-{formatCurrency(discount)}</span>
                 </div>
               )}
               <div className="flex justify-between font-bold text-lg border-t pt-2 text-gray-900">
                 <span>Tổng cộng:</span>
-                <span>${(state.total > 100 ? state.total : state.total + 10).toFixed(2)}</span>
+                <span>{formatCurrency(total)}</span>
               </div>
             </div>
-
-            {/* Debug Info - Chỉ hiển thị trong development */}
-            {process.env.NODE_ENV === 'development' && (
-              <div className="mt-4 p-3 bg-yellow-100 border border-yellow-400 rounded text-xs">
-                <p><strong>Debug Info:</strong></p>
-                <p>SessionId: {localStorage.getItem('cartSessionId') || 'Not found'}</p>
-                <p>Token: {localStorage.getItem('token') ? 'Exists' : 'Not found'}</p>
-                <p>Items in cart: {state.items.length}</p>
-              </div>
-            )}
 
             {/* Security Badges */}
             <div className="mt-6 pt-4 border-t border-gray-200">
@@ -361,6 +356,16 @@ export default function CheckoutPage() {
                 </div>
               </div>
             </div>
+
+            {/* Debug Info - Chỉ hiển thị trong development */}
+            {process.env.NODE_ENV === 'development' && (
+              <div className="mt-4 p-3 bg-yellow-100 border border-yellow-400 rounded text-xs">
+                <p><strong>Debug Info:</strong></p>
+                <p>Items in cart: {state.items.length}</p>
+                <p>Cart total: {state.total}</p>
+                <p>Calculated total: {total}</p>
+              </div>
+            )}
           </div>
         </div>
       )}

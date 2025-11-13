@@ -8,6 +8,8 @@ export enum OrderStatus {
 }
 
 export interface OrderItem {
+    customerId?: number; // ✅ Thêm optional
+
   id: number;
   productId: number;
   productName: string;
