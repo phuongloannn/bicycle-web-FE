@@ -1,4 +1,5 @@
-const API_BASE_URL = 'http://127.0.0.1:3000';
+// src/lib/api/products.ts
+import { apiClient } from "./client";
 
 export interface Product {
   id: number;
@@ -6,105 +7,74 @@ export interface Product {
   description: string;
   price: number;
   quantity: number;
+  stock: number;
   category: string;
-  imageUrl?: string;        // 🔥 THÊM
-  imageFilename?: string; 
+  image_url?: string;
+  image_filename?: string;
+  // ✅ THÊM CAMELCASE FIELDS
+  imageUrl?: string;
+  imageFilename?: string;
   createdAt: string;
   updatedAt: string;
 }
 
+// ✅ GET all products
+export const getProducts = () =>
+  apiClient.get<Product[]>("/products");
+
+// ✅ GET product by id
+export const getProductById = (id: number) =>
+  apiClient.get<Product>(`/products/${id}`);
+
+// ✅ SEARCH
+export const searchProducts = (query: string) =>
+  apiClient.get<Product[]>(`/products?q=${encodeURIComponent(query)}`);
+
+// ✅ CREATE product
 export interface CreateProductDto {
   name: string;
   description?: string;
   price: number;
   quantity: number;
   category?: string;
-  imageUrl?: string;        // 🔥 THÊM
-  imageFilename?: string; 
+  image_url?: string;
+  image_filename?: string;
+  // ✅ THÊM CAMELCASE FIELDS
+  imageUrl?: string;
+  imageFilename?: string;
 }
 
-// 🔥 THÊM SEARCH API
-export const searchProducts = async (query: string): Promise<Product[]> => {
-  const response = await fetch(`${API_BASE_URL}/products/search?q=${encodeURIComponent(query)}`);
-  if (!response.ok) {
-    throw new Error('Failed to search products');
-  }
-  return response.json();
-};
+export const createProduct = (data: CreateProductDto) =>
+  apiClient.post<Product>("/products", data);
 
-// 🔥 UPLOAD IMAGE API
-export const uploadProductImage = async (file: File): Promise<{ url: string; filename: string }> => {
-  const formData = new FormData();
-  formData.append('image', file);
-  
-  const response = await fetch(`${API_BASE_URL}/upload/product-image`, {
-    method: 'POST',
-    body: formData,
-  });
-  
-  if (!response.ok) {
-    throw new Error('Failed to upload image');
-  }
-  
-  return response.json();
-};
-
+// ✅ UPDATE
 export interface UpdateProductDto extends Partial<CreateProductDto> {}
 
-// GET all products
-export const getProducts = async (): Promise<Product[]> => {
-  const response = await fetch(`${API_BASE_URL}/products`);
-  if (!response.ok) {
-    throw new Error('Failed to fetch products');
-  }
-  return response.json();
+export const updateProduct = (id: number, data: UpdateProductDto) =>
+  apiClient.patch<Product>(`/products/${id}`, data);
+
+// ✅ DELETE
+export const deleteProduct = (id: number) =>
+  apiClient.delete(`/products/${id}`);
+
+// ✅ UPLOAD IMAGE
+export const uploadProductImage = async (file: File) => {
+  const formData = new FormData();
+  formData.append("image", file);
+
+  return apiClient.post<{ url: string; filename: string }>(
+    "/products/upload",
+    formData as any
+  );
 };
 
-// GET product by ID
-export const getProductById = async (id: number): Promise<Product> => {
-  const response = await fetch(`${API_BASE_URL}/products/${id}`);
-  if (!response.ok) {
-    throw new Error('Failed to fetch product');
-  }
-  return response.json();
-};
-
-// CREATE product
-export const createProduct = async (data: CreateProductDto): Promise<Product> => {
-  const response = await fetch(`${API_BASE_URL}/products`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(data),
-  });
-  if (!response.ok) {
-    throw new Error('Failed to create product');
-  }
-  return response.json();
-};
-
-// UPDATE product
-export const updateProduct = async (id: number, data: UpdateProductDto): Promise<Product> => {
-  const response = await fetch(`${API_BASE_URL}/products/${id}`, {
-    method: 'PATCH',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(data),
-  });
-  if (!response.ok) {
-    throw new Error('Failed to update product');
-  }
-  return response.json();
-};
-
-// DELETE product
-export const deleteProduct = async (id: number): Promise<void> => {
-  const response = await fetch(`${API_BASE_URL}/products/${id}`, {
-    method: 'DELETE',
-  });
-  if (!response.ok) {
-    throw new Error('Failed to delete product');
-  }
+// ✅ AGGREGATED API OBJECT
+export const productsApi = {
+  getAll: getProducts,
+  getById: getProductById,
+  search: searchProducts,
+  create: createProduct,
+  update: updateProduct,
+  delete: deleteProduct,
+  uploadImage: uploadProductImage,
 };

@@ -1,143 +1,141 @@
+// src/app/store/products/page.tsx
 'use client';
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
-
-interface Product {
-  id: number;
-  name: string;
-  price: number;
-  image: string;
-  category: string;
-  description: string;
-  quantity: number;
-}
+// Sửa: Dùng relative path
+import { Product } from '../../../types/store';
+import { StoreService } from '../../../services/StoreService';
+import ProductCard from '../../../components/store/ProductCard';
 
 export default function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
+  const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('');
+  const [categories, setCategories] = useState<string[]>([]);
 
   useEffect(() => {
-    fetchProducts();
+    async function loadProducts() {
+      try {
+        const storeService = new StoreService();
+        const [productsData, categoriesData] = await Promise.all([
+          storeService.getProducts(),
+          storeService.getCategories()
+        ]);
+        
+        setProducts(productsData);
+        setFilteredProducts(productsData);
+        setCategories(categoriesData);
+      } catch (error) {
+        console.error('Failed to load products:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadProducts();
   }, []);
 
-  const fetchProducts = async () => {
-    try {
-      const response = await fetch('/api/products');
-      const data = await response.json();
-      setProducts(data);
-    } catch (error) {
-      console.error('Error fetching products:', error);
-    } finally {
-      setLoading(false);
+  // Filter products
+  useEffect(() => {
+    let filtered = products;
+
+    if (searchTerm) {
+      filtered = filtered.filter(product =>
+        product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        product.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        product.category.toLowerCase().includes(searchTerm.toLowerCase())
+      );
     }
-  };
 
-  const handleSearch = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      const response = await fetch(`/api/products/search?q=${searchTerm}`);
-      const data = await response.json();
-      setProducts(data);
-    } catch (error) {
-      console.error('Error searching products:', error);
+    if (selectedCategory) {
+      filtered = filtered.filter(product => product.category === selectedCategory);
     }
-  };
 
-  const addToCart = async (productId: number, price: number) => {
-    try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        alert('Please login to add to cart');
-        return;
-      }
-
-      const response = await fetch('/api/cart/add', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          productId,
-          quantity: 1,
-          price
-        })
-      });
-
-      if (response.ok) {
-        alert('Product added to cart!');
-      } else {
-        alert('Failed to add to cart');
-      }
-    } catch (error) {
-      console.error('Error adding to cart:', error);
-    }
-  };
+    setFilteredProducts(filtered);
+  }, [searchTerm, selectedCategory, products]);
 
   if (loading) {
-    return <div>Loading...</div>;
+    return (
+      <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-center items-center min-h-64">
+          <div className="text-lg">Đang tải sản phẩm...</div>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      {/* Search Bar */}
-      <form onSubmit={handleSearch} className="mb-6">
-        <div className="flex">
-          <input
-            type="text"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Search bicycles..."
-            className="flex-1 border border-gray-300 rounded-l-lg px-4 py-2"
-          />
-          <button 
-            type="submit"
-            className="bg-blue-600 text-white px-6 py-2 rounded-r-lg hover:bg-blue-700"
+    <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+      {/* Header */}
+      <div className="mb-8">
+        <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Tất cả sản phẩm</h1>
+        <p className="text-xl text-gray-600 mb-8">
+          Khám phá {products.length} sản phẩm đa dạng
+        </p>
+        
+        {/* Search and Filter */}
+        <div className="flex flex-col lg:flex-row gap-4 mb-8 bg-white p-6 rounded-lg shadow-md">
+          <div className="flex-1">
+            <input
+              type="text"
+              placeholder="Tìm kiếm sản phẩm theo tên, mô tả hoặc danh mục..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-lg"
+            />
+          </div>
+          
+          <select
+            value={selectedCategory}
+            onChange={(e) => setSelectedCategory(e.target.value)}
+            className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-lg min-w-48"
           >
-            Search
-          </button>
+            <option value="">Tất cả danh mục</option>
+            {categories.map(category => (
+              <option key={category} value={category}>{category}</option>
+            ))}
+          </select>
+
+          {(searchTerm || selectedCategory) && (
+            <button
+              onClick={() => { setSearchTerm(''); setSelectedCategory(''); }}
+              className="px-6 py-3 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition duration-300 text-lg"
+            >
+              Xóa lọc
+            </button>
+          )}
         </div>
-      </form>
+      </div>
+
+      {/* Results Info */}
+      <div className="mb-6">
+        <p className="text-gray-600">
+          Hiển thị {filteredProducts.length} sản phẩm
+          {searchTerm && ` cho từ khóa "${searchTerm}"`}
+          {selectedCategory && ` trong danh mục "${selectedCategory}"`}
+        </p>
+      </div>
 
       {/* Products Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
-        {products.map((product) => (
-          <div key={product.id} className="bg-white rounded-lg shadow-md overflow-hidden">
-            <img 
-              src={product.image || '/images/placeholder-bike.jpg'} 
-              alt={product.name}
-              className="w-full h-48 object-cover"
-            />
-            <div className="p-4">
-              <h3 className="font-semibold text-lg mb-2">{product.name}</h3>
-              <p className="text-gray-600 text-sm mb-2">{product.category}</p>
-              <p className="text-blue-600 font-bold text-lg">${product.price}</p>
-              <p className="text-gray-500 text-sm">Stock: {product.quantity}</p>
-              
-              <div className="mt-4 flex space-x-2">
-                <Link 
-                  href={`/store/products/${product.id}`}
-                  className="flex-1 bg-gray-200 text-gray-800 py-2 px-4 rounded text-center hover:bg-gray-300"
-                >
-                  Details
-                </Link>
-                <button 
-                  onClick={() => addToCart(product.id, product.price)}
-                  disabled={product.quantity === 0}
-                  className={`flex-1 py-2 px-4 rounded ${
-                    product.quantity === 0 
-                      ? 'bg-gray-400 cursor-not-allowed' 
-                      : 'bg-blue-600 hover:bg-blue-700'
-                  } text-white`}
-                >
-                  {product.quantity === 0 ? 'Out of Stock' : 'Add to Cart'}
-                </button>
-              </div>
-            </div>
-          </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        {filteredProducts.map((product) => (
+          <ProductCard key={product.id} product={product} />
         ))}
       </div>
+
+      {filteredProducts.length === 0 && (
+        <div className="text-center text-gray-500 py-16">
+          <div className="text-6xl mb-4">🔍</div>
+          <p className="text-xl mb-4">Không tìm thấy sản phẩm nào phù hợp.</p>
+          <button 
+            onClick={() => { setSearchTerm(''); setSelectedCategory(''); }}
+            className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition duration-300"
+          >
+            Xóa bộ lọc
+          </button>
+        </div>
+      )}
     </div>
   );
 }

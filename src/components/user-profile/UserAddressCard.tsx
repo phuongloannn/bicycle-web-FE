@@ -1,5 +1,5 @@
 "use client";
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useModal } from "../../hooks/useModal";
 import { Modal } from "../ui/modal";
 import Button from "../ui/button/Button";
@@ -8,11 +8,90 @@ import Label from "../form/Label";
 
 export default function UserAddressCard() {
   const { isOpen, openModal, closeModal } = useModal();
+  
+  // State cho thông tin địa chỉ - THAY BẰNG THÔNG TIN CỦA BẠN
+  const [addressInfo, setAddressInfo] = useState({
+    country: "Việt Nam",
+    cityState: "Hà Nội, Việt Nam",
+    postalCode: "100000", 
+    taxId: "MST123456789",
+    address: "123 Đường ABC, Quận XYZ",
+    phone: "+84 123 456 789"
+  });
+
+  // State cho form editing
+  const [formData, setFormData] = useState(addressInfo);
+
+  // ✅ THÊM: Load từ localStorage khi component mount
+  useEffect(() => {
+    const savedUserInfo = localStorage.getItem('userProfile');
+    if (savedUserInfo) {
+      try {
+        const parsedInfo = JSON.parse(savedUserInfo);
+        setAddressInfo(prev => ({
+          ...prev,
+          country: parsedInfo.country || prev.country,
+          cityState: parsedInfo.location || prev.cityState,
+          address: parsedInfo.address || prev.address,
+          phone: parsedInfo.phone || prev.phone
+        }));
+        setFormData(prev => ({
+          ...prev,
+          country: parsedInfo.country || prev.country,
+          cityState: parsedInfo.location || prev.cityState,
+          address: parsedInfo.address || prev.address,
+          phone: parsedInfo.phone || prev.phone
+        }));
+      } catch (error) {
+        console.error('Error parsing saved address info:', error);
+      }
+    }
+  }, []);
+
+  // Cập nhật form data khi input thay đổi
+  const handleInputChange = (field: string, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
   const handleSave = () => {
-    // Handle save logic here
-    console.log("Saving changes...");
+    // Cập nhật thông tin địa chỉ
+    setAddressInfo(formData);
+    
+    // ✅ THÊM: Lưu vào localStorage
+    const userProfileData = JSON.parse(localStorage.getItem('userProfile') || '{}');
+    const updatedProfile = {
+      ...userProfileData,
+      address: formData.address,
+      phone: formData.phone,
+      location: formData.cityState,
+      country: formData.country
+    };
+    
+    localStorage.setItem('userProfile', JSON.stringify(updatedProfile));
+    
+    // ✅ THÊM: Trigger event để các component khác cập nhật
+    window.dispatchEvent(new Event('storage'));
+    
+    console.log("Saving address info:", formData);
+    
     closeModal();
   };
+
+  // Reset form khi mở modal
+  const handleOpenModal = () => {
+    setFormData(addressInfo);
+    openModal();
+  };
+
+  // Hủy và đóng modal
+  const handleCancel = () => {
+    setFormData(addressInfo);
+    closeModal();
+  };
+
   return (
     <>
       <div className="p-5 border border-gray-200 rounded-2xl dark:border-gray-800 lg:p-6">
@@ -28,7 +107,7 @@ export default function UserAddressCard() {
                   Country
                 </p>
                 <p className="text-sm font-medium text-gray-800 dark:text-white/90">
-                  United States
+                  {addressInfo.country}
                 </p>
               </div>
 
@@ -37,7 +116,7 @@ export default function UserAddressCard() {
                   City/State
                 </p>
                 <p className="text-sm font-medium text-gray-800 dark:text-white/90">
-                  Phoenix, Arizona, United States.
+                  {addressInfo.cityState}
                 </p>
               </div>
 
@@ -46,7 +125,7 @@ export default function UserAddressCard() {
                   Postal Code
                 </p>
                 <p className="text-sm font-medium text-gray-800 dark:text-white/90">
-                  ERT 2489
+                  {addressInfo.postalCode}
                 </p>
               </div>
 
@@ -55,14 +134,33 @@ export default function UserAddressCard() {
                   TAX ID
                 </p>
                 <p className="text-sm font-medium text-gray-800 dark:text-white/90">
-                  AS4568384
+                  {addressInfo.taxId}
+                </p>
+              </div>
+
+              {/* Thêm thông tin địa chỉ chi tiết nếu cần */}
+              <div className="col-span-2">
+                <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
+                  Address
+                </p>
+                <p className="text-sm font-medium text-gray-800 dark:text-white/90">
+                  {addressInfo.address}
+                </p>
+              </div>
+
+              <div className="col-span-2">
+                <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
+                  Phone
+                </p>
+                <p className="text-sm font-medium text-gray-800 dark:text-white/90">
+                  {addressInfo.phone}
                 </p>
               </div>
             </div>
           </div>
 
           <button
-            onClick={openModal}
+            onClick={handleOpenModal}
             className="flex w-full items-center justify-center gap-2 rounded-full border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-700 shadow-theme-xs hover:bg-gray-50 hover:text-gray-800 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-white/[0.03] dark:hover:text-gray-200 lg:inline-flex lg:w-auto"
           >
             <svg
@@ -84,45 +182,83 @@ export default function UserAddressCard() {
           </button>
         </div>
       </div>
-      <Modal isOpen={isOpen} onClose={closeModal} className="max-w-[700px] m-4">
+
+      <Modal isOpen={isOpen} onClose={handleCancel} className="max-w-[700px] m-4">
         <div className="relative w-full p-4 overflow-y-auto bg-white no-scrollbar rounded-3xl dark:bg-gray-900 lg:p-11">
           <div className="px-2 pr-14">
             <h4 className="mb-2 text-2xl font-semibold text-gray-800 dark:text-white/90">
               Edit Address
             </h4>
             <p className="mb-6 text-sm text-gray-500 dark:text-gray-400 lg:mb-7">
-              Update your details to keep your profile up-to-date.
+              Update your address information.
             </p>
           </div>
-          <form className="flex flex-col">
+          
+          <form className="flex flex-col" onSubmit={(e) => e.preventDefault()}>
             <div className="px-2 overflow-y-auto custom-scrollbar">
               <div className="grid grid-cols-1 gap-x-6 gap-y-5 lg:grid-cols-2">
                 <div>
                   <Label>Country</Label>
-                  <Input type="text" defaultValue="United States" />
+                  <Input 
+                    type="text" 
+                    value={formData.country}
+                    onChange={(e) => handleInputChange("country", e.target.value)}
+                  />
                 </div>
 
                 <div>
                   <Label>City/State</Label>
-                  <Input type="text" defaultValue="Arizona, United States." />
+                  <Input 
+                    type="text" 
+                    value={formData.cityState}
+                    onChange={(e) => handleInputChange("cityState", e.target.value)}
+                  />
                 </div>
 
                 <div>
                   <Label>Postal Code</Label>
-                  <Input type="text" defaultValue="ERT 2489" />
+                  <Input 
+                    type="text" 
+                    value={formData.postalCode}
+                    onChange={(e) => handleInputChange("postalCode", e.target.value)}
+                  />
                 </div>
 
                 <div>
                   <Label>TAX ID</Label>
-                  <Input type="text" defaultValue="AS4568384" />
+                  <Input 
+                    type="text" 
+                    value={formData.taxId}
+                    onChange={(e) => handleInputChange("taxId", e.target.value)}
+                  />
+                </div>
+
+                {/* Thêm các trường mới */}
+                <div className="col-span-2">
+                  <Label>Address</Label>
+                  <Input 
+                    type="text" 
+                    value={formData.address}
+                    onChange={(e) => handleInputChange("address", e.target.value)}
+                  />
+                </div>
+
+                <div className="col-span-2">
+                  <Label>Phone</Label>
+                  <Input 
+                    type="tel" 
+                    value={formData.phone}
+                    onChange={(e) => handleInputChange("phone", e.target.value)}
+                  />
                 </div>
               </div>
             </div>
+            
             <div className="flex items-center gap-3 px-2 mt-6 lg:justify-end">
-              <Button size="sm" variant="outline" onClick={closeModal}>
-                Close
+              <Button size="sm" variant="outline" onClick={handleCancel} type="button">
+                Cancel
               </Button>
-              <Button size="sm" onClick={handleSave}>
+              <Button size="sm" onClick={handleSave} type="button">
                 Save Changes
               </Button>
             </div>

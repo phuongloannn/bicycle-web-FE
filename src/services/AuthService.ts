@@ -1,4 +1,6 @@
-import { apiClient } from '@/lib/api/ApiClient';
+import { apiClient } from '@/lib/api/client';
+import { LoginResponse } from "@/types/auth";
+
 
 export const AuthService = {
   async signin(email: string, password: string) {
@@ -28,10 +30,11 @@ export const AuthService = {
         try {
           console.log(`\n🔧 [AuthService] === TRYING ENDPOINT: ${endpoint} ===`);
           
-          const res = await apiClient.post(endpoint, { 
-            email: email,
-            password: password
-          });
+          const res = await apiClient.post<LoginResponse>(endpoint, {
+  email,
+  password
+});
+
           
           console.log(`✅ [AuthService] SUCCESS with endpoint: ${endpoint}`);
           successfulEndpoint = endpoint;

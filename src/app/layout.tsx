@@ -1,8 +1,9 @@
 import { Outfit } from 'next/font/google';
 import './globals.css';
 
-import { SidebarProvider } from '@/context/SidebarContext';
-import { ThemeProvider } from '@/context/ThemeContext';
+import { SidebarProvider } from '@/contexts/SidebarContext';
+import { ThemeProvider } from '@/contexts/ThemeContext';
+import { CartProvider } from '@/contexts/CartContext';
 
 const outfit = Outfit({
   subsets: ["latin"],
@@ -10,17 +11,21 @@ const outfit = Outfit({
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
     <html lang="en">
       <body 
         className={`${outfit.className} dark:bg-gray-900`}
-        suppressHydrationWarning  // ✅ THÊM DÒNG NÀY
+        suppressHydrationWarning
       >
         <ThemeProvider>
-          <SidebarProvider>{children}</SidebarProvider>
+          <SidebarProvider>
+            <CartProvider>
+              {children}
+            </CartProvider>
+          </SidebarProvider>
         </ThemeProvider>
       </body>
     </html>

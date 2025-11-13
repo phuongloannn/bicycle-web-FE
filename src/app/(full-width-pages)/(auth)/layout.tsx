@@ -1,7 +1,7 @@
 import GridShape from "@/components/common/GridShape";
 import ThemeTogglerTwo from "@/components/common/ThemeTogglerTwo";
 
-import { ThemeProvider } from "@/context/ThemeContext";
+import { ThemeProvider } from "@/contexts/ThemeContext";
 import Image from "next/image";
 import Link from "next/link";
 import React from "react";
@@ -25,8 +25,10 @@ export default function AuthLayout({
                   <Image
                     width={231}
                     height={48}
-                    src="./images/logo/auth-logo.svg"
+                    src="/images/logo/auth-logo.svg" // ✅ Sửa đường dẫn
                     alt="Logo"
+                    className="w-auto h-auto" // ✅ THÊM DÒNG NÀY
+                    priority
                   />
                 </Link>
                 <p className="text-center text-gray-400 dark:text-white/60">

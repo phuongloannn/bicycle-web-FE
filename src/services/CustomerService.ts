@@ -1,4 +1,4 @@
-import { apiClient } from '@/lib/api/ApiClient';
+import { apiClient } from '@/lib/api/client';
 
 export const CustomerService = {
   list() {

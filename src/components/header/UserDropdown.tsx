@@ -1,7 +1,7 @@
 "use client";
 import Image from "next/image";
 import Link from "next/link";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Dropdown } from "../ui/dropdown/Dropdown";
 import { DropdownItem } from "../ui/dropdown/DropdownItem";
 import SignOutButton from "../auth/SignOutButton";
@@ -9,14 +9,70 @@ import SignOutButton from "../auth/SignOutButton";
 export default function UserDropdown() {
   const [isOpen, setIsOpen] = useState(false);
 
-function toggleDropdown(e: React.MouseEvent<HTMLButtonElement, MouseEvent>) {
-  e.stopPropagation();
-  setIsOpen((prev) => !prev);
-}
+  // State đồng bộ với profile
+  const [userInfo, setUserInfo] = useState({
+    name: "Mai Lê Phương Loan",
+    email: "email_cua_ban@gmail.com",
+    avatar: "/images/user/owner.jpg"
+  });
+
+  // Lấy thông tin user từ localStorage khi component mount
+  useEffect(() => {
+    // Sửa key thành 'userProfile' để khớp với profile
+    const savedUserInfo = localStorage.getItem('userProfile');
+    if (savedUserInfo) {
+      try {
+        const parsedInfo = JSON.parse(savedUserInfo);
+        setUserInfo({
+          name: `${parsedInfo.firstName} ${parsedInfo.lastName}`,
+          email: parsedInfo.email,
+          avatar: parsedInfo.avatar
+        });
+      } catch (error) {
+        console.error('Error parsing user info:', error);
+      }
+    }
+  }, []);
+
+  // Lắng nghe sự thay đổi từ profile
+  useEffect(() => {
+    const handleStorageChange = () => {
+      const savedUserInfo = localStorage.getItem('userProfile');
+      if (savedUserInfo) {
+        try {
+          const parsedInfo = JSON.parse(savedUserInfo);
+          setUserInfo({
+            name: `${parsedInfo.firstName} ${parsedInfo.lastName}`,
+            email: parsedInfo.email,
+            avatar: parsedInfo.avatar
+          });
+        } catch (error) {
+          console.error('Error parsing user info:', error);
+        }
+      }
+    };
+
+    // Lắng nghe sự thay đổi localStorage
+    window.addEventListener('storage', handleStorageChange);
+    
+    // Lắng nghe custom event từ profile
+    window.addEventListener('profileUpdated', handleStorageChange as EventListener);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('profileUpdated', handleStorageChange as EventListener);
+    };
+  }, []);
+
+  function toggleDropdown(e: React.MouseEvent<HTMLButtonElement, MouseEvent>) {
+    e.stopPropagation();
+    setIsOpen((prev) => !prev);
+  }
 
   function closeDropdown() {
     setIsOpen(false);
   }
+
   return (
     <div className="relative">
       <button
@@ -27,12 +83,13 @@ function toggleDropdown(e: React.MouseEvent<HTMLButtonElement, MouseEvent>) {
           <Image
             width={44}
             height={44}
-            src="/images/user/owner.jpg"
+            src={userInfo.avatar}
             alt="User"
+            className="object-cover w-full h-full"
           />
         </span>
 
-        <span className="block mr-1 font-medium text-theme-sm">Musharof</span>
+        <span className="block mr-1 font-medium text-theme-sm">{userInfo.name}</span>
 
         <svg
           className={`stroke-gray-500 dark:stroke-gray-400 transition-transform duration-200 ${
@@ -59,16 +116,28 @@ function toggleDropdown(e: React.MouseEvent<HTMLButtonElement, MouseEvent>) {
         onClose={closeDropdown}
         className="absolute right-0 mt-[17px] flex w-[260px] flex-col rounded-2xl border border-gray-200 bg-white p-3 shadow-theme-lg dark:border-gray-800 dark:bg-gray-dark"
       >
-        <div>
-          <span className="block font-medium text-gray-700 text-theme-sm dark:text-gray-400">
-            Musharof Chowdhury
-          </span>
-          <span className="mt-0.5 block text-theme-xs text-gray-500 dark:text-gray-400">
-            randomuser@pimjo.com
-          </span>
+        {/* User Info Section */}
+        <div className="flex items-center gap-3 pb-3 border-b border-gray-200 dark:border-gray-800">
+          <div className="overflow-hidden rounded-full h-11 w-11">
+            <Image
+              width={44}
+              height={44}
+              src={userInfo.avatar}
+              alt="User"
+              className="object-cover w-full h-full"
+            />
+          </div>
+          <div>
+            <span className="block font-medium text-gray-700 text-theme-sm dark:text-white">
+              {userInfo.name}
+            </span>
+            <span className="mt-0.5 block text-theme-xs text-gray-500 dark:text-gray-400">
+              {userInfo.email}
+            </span>
+          </div>
         </div>
 
-        <ul className="flex flex-col gap-1 pt-4 pb-3 border-b border-gray-200 dark:border-gray-800">
+        <ul className="flex flex-col gap-1 pt-4 pb-3">
           <li>
             <DropdownItem
               onItemClick={closeDropdown}
@@ -145,6 +214,8 @@ function toggleDropdown(e: React.MouseEvent<HTMLButtonElement, MouseEvent>) {
             </DropdownItem>
           </li>
         </ul>
+        
+        {/* Sign Out Button */}
         <Link
           href="/signin"
           className="flex items-center gap-3 px-3 py-2 mt-3 font-medium text-gray-700 rounded-lg group text-theme-sm hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300"

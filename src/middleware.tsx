@@ -2,44 +2,59 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 export function middleware(req: NextRequest) {
-    const token = req.cookies.get('token')?.value;
-    const { pathname } = req.nextUrl;
+  const token = req.cookies.get('token')?.value;
+  const { pathname } = req.nextUrl;
 
+  // ✅ Các route public (không cần login)
+  const publicPaths = [
+    '/signin',
+    '/signup',
+    '/forgot-password',
+    '/reset-password',
 
-//   // If trying to access dashboard but no token → redirect
-//   if (!token && req.nextUrl.pathname.startsWith('/dashboard')) {
-//     return NextResponse.redirect(new URL('/signin', req.url));
-//   }
-  const publicPaths = ['/signin', '/signup', '/forgot-password', '/reset-password'];
+    // ✅ Cho phép toàn bộ store hoạt động không yêu cầu login
+    '/store',
+  ];
 
-  // If already logged in and tries to go to /signin → redirect to dashboard
-  if (token && req.nextUrl.pathname.startsWith('/signin')) {
+  // ✅ Nếu route bắt đầu bằng /store => cho phép vào
+  if (pathname.startsWith('/store')) {
+    return NextResponse.next();
+  }
+
+  // ✅ Nếu user đã login mà vào /signin → redirect về dashboard
+  if (token && pathname.startsWith('/signin')) {
     return NextResponse.redirect(new URL('/dashboard', req.url));
   }
-  
-  // If the request path starts with any public path, allow it
+
+  // ✅ Public paths → không cần token
   if (publicPaths.some((path) => pathname.startsWith(path))) {
     return NextResponse.next();
   }
 
-// 🔒 For all other routes, require token
-  if (!token) {
+  // ✅ Protect /dashboard nếu chưa login
+  if (!token && pathname.startsWith('/dashboard')) {
     const loginUrl = new URL('/signin', req.url);
-    loginUrl.searchParams.set('from', pathname); // optional redirect after login
+    loginUrl.searchParams.set('from', pathname);
     return NextResponse.redirect(loginUrl);
   }
 
-  
+  // ✅ Protect /admin nếu chưa login
+  if (!token && pathname.startsWith('/admin')) {
+    const loginUrl = new URL('/signin', req.url);
+    loginUrl.searchParams.set('from', pathname);
+    return NextResponse.redirect(loginUrl);
+  }
 
-  // Continue normally
   return NextResponse.next();
 }
 
+// ✅ Middleware chỉ chạy cho các route sau
 export const config = {
-    matcher: ['/((?!_next/static|_next/image|favicon.ico|api).*)'],
-
-//   matcher: [
-//     '/dashboard/:path*', // protect all /dashboard routes
-//     '/signin',           // optional redirect logic
-//   ],
+  matcher: [
+    '/dashboard/:path*',
+    '/admin/:path*',
+    '/signin',
+    '/signup',
+    '/store/:path*',
+  ],
 };

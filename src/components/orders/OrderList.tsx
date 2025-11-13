@@ -1,11 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { Order, OrderStatus } from '@/types/order';
 import { orderService } from '@/services/orderService';
+import { useRouter } from 'next/navigation';
+import OrderDetail from './OrderDetail';
 
 const OrderList: React.FC = () => {
+  const router = useRouter();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedStatus, setSelectedStatus] = useState<OrderStatus | 'all'>('all');
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [showDetail, setShowDetail] = useState(false);
 
   useEffect(() => {
     loadOrders();
@@ -27,6 +32,33 @@ const OrderList: React.FC = () => {
       console.error('Error loading orders:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // ✅ THÊM: Handler xem chi tiết
+  const handleViewOrder = (order: Order) => {
+    setSelectedOrder(order);
+    setShowDetail(true);
+  };
+
+  // ✅ THÊM: Handler sửa order
+  const handleEditOrder = (orderId: number) => {
+    router.push(`/orders/${orderId}/edit`);
+  };
+
+  // ✅ THÊM: Handler xóa order
+  const handleDeleteOrder = async (orderId: number, orderNumber: string) => {
+    const confirmed = confirm(`Bạn có chắc muốn xóa đơn hàng ${orderNumber}?`);
+    
+    if (!confirmed) return;
+
+    try {
+      await orderService.deleteOrder(orderId);
+      alert('Đã xóa đơn hàng thành công!');
+      loadOrders(); // Reload danh sách
+    } catch (error) {
+      console.error('Error deleting order:', error);
+      alert('Có lỗi xảy ra khi xóa đơn hàng!');
     }
   };
 
@@ -155,13 +187,26 @@ const OrderList: React.FC = () => {
                     {formatDate(order.createdAt)}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <button className="text-blue-600 hover:text-blue-900 mr-3">
+                    {/* ✅ THÊM onClick handlers */}
+                    <button 
+                      onClick={() => handleViewOrder(order)}
+                      className="text-blue-600 hover:text-blue-900 mr-3"
+                      title="Xem chi tiết"
+                    >
                       👁️ Xem
                     </button>
-                    <button className="text-green-600 hover:text-green-900 mr-3">
+                    <button 
+                      onClick={() => handleEditOrder(order.id)}
+                      className="text-green-600 hover:text-green-900 mr-3"
+                      title="Chỉnh sửa"
+                    >
                       ✏️ Sửa
                     </button>
-                    <button className="text-red-600 hover:text-red-900">
+                    <button 
+                      onClick={() => handleDeleteOrder(order.id, order.orderNumber)}
+                      className="text-red-600 hover:text-red-900"
+                      title="Xóa đơn hàng"
+                    >
                       🗑️ Xóa
                     </button>
                   </td>
@@ -178,6 +223,17 @@ const OrderList: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* ✅ THÊM: Modal xem chi tiết */}
+      {showDetail && selectedOrder && (
+        <OrderDetail 
+          order={selectedOrder} 
+          onClose={() => {
+            setShowDetail(false);
+            setSelectedOrder(null);
+          }} 
+        />
+      )}
     </div>
   );
 };

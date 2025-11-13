@@ -1,7 +1,6 @@
-// Đường dẫn này phải chính xác
-import StoreHeader from '../../components/store/StoreHeader';
-import StoreFooter from '../../components/store/StoreFooter';
-// Note: Dùng '../../components' thay vì '../components'
+'use client';
+
+import StoreHeader from "@/components/store/StoreHeader";
 
 export default function StoreLayout({
   children,
@@ -9,10 +8,12 @@ export default function StoreLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-100">
       <StoreHeader />
-      <main>{children}</main>
-      <StoreFooter />
+
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-28 pb-12">
+        {children}
+      </main>
     </div>
   );
 }

@@ -1,5 +1,5 @@
 "use client";
-import React from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useModal } from "../../hooks/useModal";
 import { Modal } from "../ui/modal";
 import Button from "../ui/button/Button";
@@ -7,114 +7,286 @@ import Input from "../form/input/InputField";
 import Label from "../form/Label";
 import Image from "next/image";
 
-
 export default function UserMetaCard() {
   const { isOpen, openModal, closeModal } = useModal();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  // State cho thông tin user
+  const [userInfo, setUserInfo] = useState({
+    firstName: "Mai Lê Phương",
+    lastName: "Loan",
+    email: "email_cua_ban@gmail.com",
+    phone: "+84 123 456 789",
+    bio: "Team Manager",
+    location: "Arizona, United States",
+    facebook: "https://www.facebook.com/PimjoHQ",
+    twitter: "https://x.com/PimjoHQ",
+    linkedin: "https://www.linkedin.com/company/pimjo",
+    instagram: "https://instagram.com/PimjoHQ"
+  });
+
+  // State cho form editing
+  const [formData, setFormData] = useState(userInfo);
+  
+  // State cho avatar
+  const [avatar, setAvatar] = useState("/images/user/owner.jpg");
+  const [tempAvatar, setTempAvatar] = useState(avatar);
+
+  // ✅ THÊM useEffect ĐỂ LOAD DỮ LIỆU TỪ localStorage KHI COMPONENT MOUNT
+  useEffect(() => {
+    const savedUserInfo = localStorage.getItem('userProfile');
+    if (savedUserInfo) {
+      try {
+        const parsedInfo = JSON.parse(savedUserInfo);
+        
+        // Cập nhật userInfo
+        setUserInfo(prev => ({
+          ...prev,
+          firstName: parsedInfo.firstName || prev.firstName,
+          lastName: parsedInfo.lastName || prev.lastName,
+          email: parsedInfo.email || prev.email,
+          phone: parsedInfo.phone || prev.phone,
+          bio: parsedInfo.bio || prev.bio,
+          location: parsedInfo.location || prev.location,
+          facebook: parsedInfo.facebook || prev.facebook,
+          twitter: parsedInfo.twitter || prev.twitter,
+          linkedin: parsedInfo.linkedin || prev.linkedin,
+          instagram: parsedInfo.instagram || prev.instagram
+        }));
+        
+        // Cập nhật formData
+        setFormData(prev => ({
+          ...prev,
+          firstName: parsedInfo.firstName || prev.firstName,
+          lastName: parsedInfo.lastName || prev.lastName,
+          email: parsedInfo.email || prev.email,
+          phone: parsedInfo.phone || prev.phone,
+          bio: parsedInfo.bio || prev.bio,
+          location: parsedInfo.location || prev.location,
+          facebook: parsedInfo.facebook || prev.facebook,
+          twitter: parsedInfo.twitter || prev.twitter,
+          linkedin: parsedInfo.linkedin || prev.linkedin,
+          instagram: parsedInfo.instagram || prev.instagram
+        }));
+
+        // Cập nhật avatar nếu có
+        if (parsedInfo.avatar) {
+          setAvatar(parsedInfo.avatar);
+          setTempAvatar(parsedInfo.avatar);
+        }
+      } catch (error) {
+        console.error("Error loading user profile from localStorage:", error);
+      }
+    }
+  }, []);
+
+  // Cập nhật form data khi input thay đổi
+  const handleInputChange = (field: string, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
   const handleSave = () => {
-    // Handle save logic here
-    console.log("Saving changes...");
+    // Cập nhật thông tin user
+    setUserInfo(formData);
+    
+    // Cập nhật avatar nếu có thay đổi
+    if (tempAvatar !== avatar) {
+      setAvatar(tempAvatar);
+    }
+    
+    // ✅ Lưu vào localStorage
+    const userProfileData = {
+      firstName: formData.firstName,
+      lastName: formData.lastName,
+      email: formData.email,
+      avatar: tempAvatar, // Dùng tempAvatar vì đây là ảnh mới
+      phone: formData.phone,
+      bio: formData.bio,
+      location: formData.location,
+      facebook: formData.facebook,
+      twitter: formData.twitter,
+      linkedin: formData.linkedin,
+      instagram: formData.instagram
+    };
+    
+    localStorage.setItem('userProfile', JSON.stringify(userProfileData));
+    
+    // ✅ Trigger event để header cập nhật
+    window.dispatchEvent(new Event('storage'));
+    window.dispatchEvent(new CustomEvent('profileUpdated', {
+      detail: userProfileData
+    }));
+    
+    console.log("Saving user info:", formData);
+    console.log("Avatar updated:", tempAvatar);
+    
     closeModal();
   };
+
+  // Reset form khi mở modal
+  const handleOpenModal = () => {
+    setFormData(userInfo);
+    setTempAvatar(avatar);
+    openModal();
+  };
+
+  // Hủy và đóng modal
+  const handleCancel = () => {
+    setFormData(userInfo);
+    setTempAvatar(avatar);
+    closeModal();
+  };
+
+  // Xử lý đổi avatar
+  const handleAvatarClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Kiểm tra loại file
+      if (!file.type.startsWith('image/')) {
+        alert('Vui lòng chọn file ảnh!');
+        return;
+      }
+
+      // Kiểm tra kích thước file (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        alert('Ảnh không được vượt quá 5MB!');
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const newAvatar = e.target?.result as string;
+        setTempAvatar(newAvatar);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   return (
     <>
       <div className="p-5 border border-gray-200 rounded-2xl dark:border-gray-800 lg:p-6">
         <div className="flex flex-col gap-5 xl:flex-row xl:items-center xl:justify-between">
           <div className="flex flex-col items-center w-full gap-6 xl:flex-row">
-            <div className="w-20 h-20 overflow-hidden border border-gray-200 rounded-full dark:border-gray-800">
-              <Image
-                width={80}
-                height={80}
-                src="/images/user/owner.jpg"
-                alt="user"
+            {/* Avatar Section với chức năng đổi ảnh */}
+            <div className="relative">
+              <div className="w-20 h-20 overflow-hidden border border-gray-200 rounded-full dark:border-gray-800 cursor-pointer">
+                <Image
+                  width={80}
+                  height={80}
+                  src={avatar}
+                  alt="user"
+                  className="object-cover w-full h-full"
+                />
+              </div>
+              
+              {/* Edit Avatar Button */}
+              <div 
+                className="absolute bottom-0 right-0 bg-blue-500 rounded-full p-1.5 cursor-pointer hover:bg-blue-600 transition-colors"
+                onClick={handleAvatarClick}
+              >
+                <svg 
+                  className="w-3 h-3 text-white" 
+                  fill="none" 
+                  stroke="currentColor" 
+                  viewBox="0 0 24 24"
+                >
+                  <path 
+                    strokeLinecap="round" 
+                    strokeLinejoin="round" 
+                    strokeWidth={2} 
+                    d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" 
+                  />
+                  <path 
+                    strokeLinecap="round" 
+                    strokeLinejoin="round" 
+                    strokeWidth={2} 
+                    d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" 
+                  />
+                </svg>
+              </div>
+
+              {/* Hidden File Input */}
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleAvatarChange}
+                accept="image/*"
+                className="hidden"
               />
             </div>
+
             <div className="order-3 xl:order-2">
               <h4 className="mb-2 text-lg font-semibold text-center text-gray-800 dark:text-white/90 xl:text-left">
-                Musharof Chowdhury
+                {userInfo.firstName} {userInfo.lastName}
               </h4>
               <div className="flex flex-col items-center gap-1 text-center xl:flex-row xl:gap-3 xl:text-left">
                 <p className="text-sm text-gray-500 dark:text-gray-400">
-                  Team Manager
+                  {userInfo.bio}
                 </p>
                 <div className="hidden h-3.5 w-px bg-gray-300 dark:bg-gray-700 xl:block"></div>
                 <p className="text-sm text-gray-500 dark:text-gray-400">
-                  Arizona, United States
+                  {userInfo.location}
                 </p>
               </div>
             </div>
+
+            {/* Social Links */}
             <div className="flex items-center order-2 gap-2 grow xl:order-3 xl:justify-end">
               <a        
-        target="_blank"
-        rel="noreferrer" href='https://www.facebook.com/PimjoHQ' className="flex h-11 w-11 items-center justify-center gap-2 rounded-full border border-gray-300 bg-white text-sm font-medium text-gray-700 shadow-theme-xs hover:bg-gray-50 hover:text-gray-800 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-white/[0.03] dark:hover:text-gray-200">
-                <svg
-                  className="fill-current"
-                  width="20"
-                  height="20"
-                  viewBox="0 0 20 20"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    d="M11.6666 11.2503H13.7499L14.5833 7.91699H11.6666V6.25033C11.6666 5.39251 11.6666 4.58366 13.3333 4.58366H14.5833V1.78374C14.3118 1.7477 13.2858 1.66699 12.2023 1.66699C9.94025 1.66699 8.33325 3.04771 8.33325 5.58342V7.91699H5.83325V11.2503H8.33325V18.3337H11.6666V11.2503Z"
-                    fill=""
-                  />
+                target="_blank"
+                rel="noreferrer" 
+                href={userInfo.facebook}
+                className="flex h-11 w-11 items-center justify-center gap-2 rounded-full border border-gray-300 bg-white text-sm font-medium text-gray-700 shadow-theme-xs hover:bg-gray-50 hover:text-gray-800 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-white/[0.03] dark:hover:text-gray-200"
+              >
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                  <path d="M15 8C15 4 12 1 8 1C4 1 1 4 1 8C1 11.3 3.1 14.1 6.1 14.9V9.9H4.8V8H6.1V6.4C6.1 4.6 7.2 3.5 8.9 3.5C9.7 3.5 10.5 3.6 10.5 3.6V5.2H9.6C8.7 5.2 8.5 5.7 8.5 6.3V8H10.4L10.1 9.9H8.5V14.9C11.9 14.4 15 11.5 15 8Z" fill="currentColor"/>
                 </svg>
               </a>
 
-              <a href='https://x.com/PimjoHQ' target="_blank"
-        rel="noreferrer"  className="flex h-11 w-11 items-center justify-center gap-2 rounded-full border border-gray-300 bg-white text-sm font-medium text-gray-700 shadow-theme-xs hover:bg-gray-50 hover:text-gray-800 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-white/[0.03] dark:hover:text-gray-200">
-                <svg
-                  className="fill-current"
-                  width="20"
-                  height="20"
-                  viewBox="0 0 20 20"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    d="M15.1708 1.875H17.9274L11.9049 8.75833L18.9899 18.125H13.4424L9.09742 12.4442L4.12578 18.125H1.36745L7.80912 10.7625L1.01245 1.875H6.70078L10.6283 7.0675L15.1708 1.875ZM14.2033 16.475H15.7308L5.87078 3.43833H4.23162L14.2033 16.475Z"
-                    fill=""
-                  />
+              <a 
+                href={userInfo.twitter} 
+                target="_blank"
+                rel="noreferrer"  
+                className="flex h-11 w-11 items-center justify-center gap-2 rounded-full border border-gray-300 bg-white text-sm font-medium text-gray-700 shadow-theme-xs hover:bg-gray-50 hover:text-gray-800 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-white/[0.03] dark:hover:text-gray-200"
+              >
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                  <path d="M12.6 5.5H14.5L10.3 10.5L15 15.5H10.9L7.8 11.8L4.3 15.5H2.4L6.9 10.1L2.5 5.5H6.7L9.5 8.9L12.6 5.5ZM11.8 14H13.1L5.4 6.5H4L11.8 14Z" fill="currentColor"/>
                 </svg>
               </a>
 
-              <a href="https://www.linkedin.com/company/pimjo" target="_blank"
-        rel="noreferrer" className="flex h-11 w-11 items-center justify-center gap-2 rounded-full border border-gray-300 bg-white text-sm font-medium text-gray-700 shadow-theme-xs hover:bg-gray-50 hover:text-gray-800 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-white/[0.03] dark:hover:text-gray-200">
-                <svg
-                  className="fill-current"
-                  width="20"
-                  height="20"
-                  viewBox="0 0 20 20"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    d="M5.78381 4.16645C5.78351 4.84504 5.37181 5.45569 4.74286 5.71045C4.11391 5.96521 3.39331 5.81321 2.92083 5.32613C2.44836 4.83904 2.31837 4.11413 2.59216 3.49323C2.86596 2.87233 3.48886 2.47942 4.16715 2.49978C5.06804 2.52682 5.78422 3.26515 5.78381 4.16645ZM5.83381 7.06645H2.50048V17.4998H5.83381V7.06645ZM11.1005 7.06645H7.78381V17.4998H11.0672V12.0248C11.0672 8.97475 15.0422 8.69142 15.0422 12.0248V17.4998H18.3338V10.8914C18.3338 5.74978 12.4505 5.94145 11.0672 8.46642L11.1005 7.06645Z"
-                    fill=""
-                  />
+              <a 
+                href={userInfo.linkedin} 
+                target="_blank"
+                rel="noreferrer" 
+                className="flex h-11 w-11 items-center justify-center gap-2 rounded-full border border-gray-300 bg-white text-sm font-medium text-gray-700 shadow-theme-xs hover:bg-gray-50 hover:text-gray-800 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-white/[0.03] dark:hover:text-gray-200"
+              >
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                  <path d="M3.5 2.5C3.5 3.3 2.8 4 2 4C1.2 4 0.5 3.3 0.5 2.5C0.5 1.7 1.2 1 2 1C2.8 1 3.5 1.7 3.5 2.5ZM3.5 5.5H0.5V15.5H3.5V5.5ZM8.5 5.5H5.5V15.5H8.5V10.5C8.5 8.4 10.4 6.5 12.5 6.5V5.5C10.4 5.5 8.5 7.4 8.5 9.5V15.5H11.5V10.5C11.5 9.1 12.9 7.7 14.3 7.7V5.7C12.9 5.7 11.5 7.1 11.5 8.5V15.5H14.5V9.5C14.5 6.7 12.3 4.5 9.5 4.5C6.7 4.5 4.5 6.7 4.5 9.5V15.5H7.5V5.5Z" fill="currentColor"/>
                 </svg>
               </a>
 
-              <a href='https://instagram.com/PimjoHQ' target="_blank"
-        rel="noreferrer" className="flex h-11 w-11 items-center justify-center gap-2 rounded-full border border-gray-300 bg-white text-sm font-medium text-gray-700 shadow-theme-xs hover:bg-gray-50 hover:text-gray-800 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-white/[0.03] dark:hover:text-gray-200">
-                <svg
-                  className="fill-current"
-                  width="20"
-                  height="20"
-                  viewBox="0 0 20 20"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    d="M10.8567 1.66699C11.7946 1.66854 12.2698 1.67351 12.6805 1.68573L12.8422 1.69102C13.0291 1.69766 13.2134 1.70599 13.4357 1.71641C14.3224 1.75738 14.9273 1.89766 15.4586 2.10391C16.0078 2.31572 16.4717 2.60183 16.9349 3.06503C17.3974 3.52822 17.6836 3.99349 17.8961 4.54141C18.1016 5.07197 18.2419 5.67753 18.2836 6.56433C18.2935 6.78655 18.3015 6.97088 18.3081 7.15775L18.3133 7.31949C18.3255 7.73011 18.3311 8.20543 18.3328 9.1433L18.3335 9.76463C18.3336 9.84055 18.3336 9.91888 18.3336 9.99972L18.3335 10.2348L18.333 10.8562C18.3314 11.794 18.3265 12.2694 18.3142 12.68L18.3089 12.8417C18.3023 13.0286 18.294 13.213 18.2836 13.4351C18.2426 14.322 18.1016 14.9268 17.8961 15.458C17.6842 16.0074 17.3974 16.4713 16.9349 16.9345C16.4717 17.397 16.0057 17.6831 15.4586 17.8955C14.9273 18.1011 14.3224 18.2414 13.4357 18.2831C13.2134 18.293 13.0291 18.3011 12.8422 18.3076L12.6805 18.3128C12.2698 18.3251 11.7946 18.3306 10.8567 18.3324L10.2353 18.333C10.1594 18.333 10.0811 18.333 10.0002 18.333H9.76516L9.14375 18.3325C8.20591 18.331 7.7306 18.326 7.31997 18.3137L7.15824 18.3085C6.97136 18.3018 6.78703 18.2935 6.56481 18.2831C5.67801 18.2421 5.07384 18.1011 4.5419 17.8955C3.99328 17.6838 3.5287 17.397 3.06551 16.9345C2.60231 16.4713 2.3169 16.0053 2.1044 15.458C1.89815 14.9268 1.75856 14.322 1.7169 13.4351C1.707 13.213 1.69892 13.0286 1.69238 12.8417L1.68714 12.68C1.67495 12.2694 1.66939 11.794 1.66759 10.8562L1.66748 9.1433C1.66903 8.20543 1.67399 7.73011 1.68621 7.31949L1.69151 7.15775C1.69815 6.97088 1.70648 6.78655 1.7169 6.56433C1.75786 5.67683 1.89815 5.07266 2.1044 4.54141C2.3162 3.9928 2.60231 3.52822 3.06551 3.06503C3.5287 2.60183 3.99398 2.31641 4.5419 2.10391C5.07315 1.89766 5.67731 1.75808 6.56481 1.71641C6.78703 1.70652 6.97136 1.69844 7.15824 1.6919L7.31997 1.68666C7.7306 1.67446 8.20591 1.6689 9.14375 1.6671L10.8567 1.66699ZM10.0002 5.83308C7.69781 5.83308 5.83356 7.69935 5.83356 9.99972C5.83356 12.3021 7.69984 14.1664 10.0002 14.1664C12.3027 14.1664 14.1669 12.3001 14.1669 9.99972C14.1669 7.69732 12.3006 5.83308 10.0002 5.83308ZM10.0002 7.49974C11.381 7.49974 12.5002 8.61863 12.5002 9.99972C12.5002 11.3805 11.3813 12.4997 10.0002 12.4997C8.6195 12.4997 7.50023 11.3809 7.50023 9.99972C7.50023 8.61897 8.61908 7.49974 10.0002 7.49974ZM14.3752 4.58308C13.8008 4.58308 13.3336 5.04967 13.3336 5.62403C13.3336 6.19841 13.8002 6.66572 14.3752 6.66572C14.9496 6.66572 15.4169 6.19913 15.4169 5.62403C15.4169 5.04967 14.9488 4.58236 14.3752 4.58308Z"
-                    fill=""
-                  />
+              <a 
+                href={userInfo.instagram} 
+                target="_blank"
+                rel="noreferrer" 
+                className="flex h-11 w-11 items-center justify-center gap-2 rounded-full border border-gray-300 bg-white text-sm font-medium text-gray-700 shadow-theme-xs hover:bg-gray-50 hover:text-gray-800 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-white/[0.03] dark:hover:text-gray-200"
+              >
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                  <path d="M8 4C5.8 4 4 5.8 4 8C4 10.2 5.8 12 8 12C10.2 12 12 10.2 12 8C12 5.8 10.2 4 8 4ZM8 10.5C6.6 10.5 5.5 9.4 5.5 8C5.5 6.6 6.6 5.5 8 5.5C9.4 5.5 10.5 6.6 10.5 8C10.5 9.4 9.4 10.5 8 10.5ZM12.5 3.5C12.5 4.1 12.1 4.5 11.5 4.5C10.9 4.5 10.5 4.1 10.5 3.5C10.5 2.9 10.9 2.5 11.5 2.5C12.1 2.5 12.5 2.9 12.5 3.5ZM15 8C15 4.7 12.3 2 9 2H7C3.7 2 1 4.7 1 8V10C1 13.3 3.7 16 7 16H9C12.3 16 15 13.3 15 10V8ZM13 10C13 12.2 11.2 14 9 14H7C4.8 14 3 12.2 3 10V8C3 5.8 4.8 4 7 4H9C11.2 4 13 5.8 13 8V10Z" fill="currentColor"/>
                 </svg>
               </a>
             </div>
           </div>
+
           <button
-            onClick={openModal}
+            onClick={handleOpenModal}
             className="flex w-full items-center justify-center gap-2 rounded-full border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-700 shadow-theme-xs hover:bg-gray-50 hover:text-gray-800 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-white/[0.03] dark:hover:text-gray-200 lg:inline-flex lg:w-auto"
           >
             <svg
@@ -136,7 +308,9 @@ export default function UserMetaCard() {
           </button>
         </div>
       </div>
-      <Modal isOpen={isOpen} onClose={closeModal} className="max-w-[700px] m-4">
+
+      {/* Edit Modal */}
+      <Modal isOpen={isOpen} onClose={handleCancel} className="max-w-[700px] m-4">
         <div className="no-scrollbar relative w-full max-w-[700px] overflow-y-auto rounded-3xl bg-white p-4 dark:bg-gray-900 lg:p-11">
           <div className="px-2 pr-14">
             <h4 className="mb-2 text-2xl font-semibold text-gray-800 dark:text-white/90">
@@ -146,8 +320,46 @@ export default function UserMetaCard() {
               Update your details to keep your profile up-to-date.
             </p>
           </div>
-          <form className="flex flex-col">
+          
+          <form className="flex flex-col" onSubmit={(e) => e.preventDefault()}>
             <div className="custom-scrollbar h-[450px] overflow-y-auto px-2 pb-3">
+              {/* Avatar Upload Section */}
+              <div className="mb-6">
+                <h5 className="mb-4 text-lg font-medium text-gray-800 dark:text-white/90">
+                  Profile Picture
+                </h5>
+                <div className="flex items-center gap-4">
+                  <div className="relative">
+                    <div className="w-16 h-16 overflow-hidden border border-gray-300 rounded-full dark:border-gray-600">
+                      <Image
+                        width={64}
+                        height={64}
+                        src={tempAvatar}
+                        alt="Preview"
+                        className="object-cover w-full h-full"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <button
+                      type="button"
+                      onClick={handleAvatarClick}
+                      className="px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 dark:bg-blue-900/20 dark:text-blue-400"
+                    >
+                      Change Photo
+                    </button>
+                    <input
+                      type="file"
+                      ref={fileInputRef}
+                      onChange={handleAvatarChange}
+                      accept="image/*"
+                      className="hidden"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Social Links Section */}
               <div>
                 <h5 className="mb-5 text-lg font-medium text-gray-800 dark:text-white/90 lg:mb-6">
                   Social Links
@@ -158,20 +370,26 @@ export default function UserMetaCard() {
                     <Label>Facebook</Label>
                     <Input
                       type="text"
-                      defaultValue="https://www.facebook.com/PimjoHQ"
+                      value={formData.facebook}
+                      onChange={(e) => handleInputChange("facebook", e.target.value)}
                     />
                   </div>
 
                   <div>
                     <Label>X.com</Label>
-                    <Input type="text" defaultValue="https://x.com/PimjoHQ" />
+                    <Input 
+                      type="text" 
+                      value={formData.twitter}
+                      onChange={(e) => handleInputChange("twitter", e.target.value)}
+                    />
                   </div>
 
                   <div>
                     <Label>Linkedin</Label>
                     <Input
                       type="text"
-                      defaultValue="https://www.linkedin.com/company/pimjo"
+                      value={formData.linkedin}
+                      onChange={(e) => handleInputChange("linkedin", e.target.value)}
                     />
                   </div>
 
@@ -179,11 +397,14 @@ export default function UserMetaCard() {
                     <Label>Instagram</Label>
                     <Input
                       type="text"
-                      defaultValue="https://instagram.com/PimjoHQ"
+                      value={formData.instagram}
+                      onChange={(e) => handleInputChange("instagram", e.target.value)}
                     />
                   </div>
                 </div>
               </div>
+              
+              {/* Personal Information Section */}
               <div className="mt-7">
                 <h5 className="mb-5 text-lg font-medium text-gray-800 dark:text-white/90 lg:mb-6">
                   Personal Information
@@ -192,36 +413,66 @@ export default function UserMetaCard() {
                 <div className="grid grid-cols-1 gap-x-6 gap-y-5 lg:grid-cols-2">
                   <div className="col-span-2 lg:col-span-1">
                     <Label>First Name</Label>
-                    <Input type="text" defaultValue="Musharof" />
+                    <Input 
+                      type="text" 
+                      value={formData.firstName}
+                      onChange={(e) => handleInputChange("firstName", e.target.value)}
+                    />
                   </div>
 
                   <div className="col-span-2 lg:col-span-1">
                     <Label>Last Name</Label>
-                    <Input type="text" defaultValue="Chowdhury" />
+                    <Input 
+                      type="text" 
+                      value={formData.lastName}
+                      onChange={(e) => handleInputChange("lastName", e.target.value)}
+                    />
                   </div>
 
                   <div className="col-span-2 lg:col-span-1">
                     <Label>Email Address</Label>
-                    <Input type="text" defaultValue="randomuser@pimjo.com" />
+                    <Input 
+                      type="email" 
+                      value={formData.email}
+                      onChange={(e) => handleInputChange("email", e.target.value)}
+                    />
                   </div>
 
                   <div className="col-span-2 lg:col-span-1">
                     <Label>Phone</Label>
-                    <Input type="text" defaultValue="+09 363 398 46" />
+                    <Input 
+                      type="tel" 
+                      value={formData.phone}
+                      onChange={(e) => handleInputChange("phone", e.target.value)}
+                    />
                   </div>
 
                   <div className="col-span-2">
                     <Label>Bio</Label>
-                    <Input type="text" defaultValue="Team Manager" />
+                    <Input 
+                      type="text" 
+                      value={formData.bio}
+                      onChange={(e) => handleInputChange("bio", e.target.value)}
+                    />
+                  </div>
+
+                  <div className="col-span-2">
+                    <Label>Location</Label>
+                    <Input 
+                      type="text" 
+                      value={formData.location}
+                      onChange={(e) => handleInputChange("location", e.target.value)}
+                    />
                   </div>
                 </div>
               </div>
             </div>
+            
             <div className="flex items-center gap-3 px-2 mt-6 lg:justify-end">
-              <Button size="sm" variant="outline" onClick={closeModal}>
-                Close
+              <Button size="sm" variant="outline" onClick={handleCancel} type="button">
+                Cancel
               </Button>
-              <Button size="sm" onClick={handleSave}>
+              <Button size="sm" onClick={handleSave} type="button">
                 Save Changes
               </Button>
             </div>
