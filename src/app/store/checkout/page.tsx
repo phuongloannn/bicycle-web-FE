@@ -36,12 +36,12 @@ export default function CheckoutPage() {
   }, [getCart]);
 
   useEffect(() => {
-  // ✅ CHỈ redirect khi thực sự cần
-  if (state.items.length === 0 && !orderSuccess && !loading) {
-    console.log('🔄 Redirecting to cart because: empty cart, no success, not loading');
-    window.location.href = '/store/cart';
-  }
-}, [state.items, orderSuccess, loading]);
+    // ✅ CHỈ redirect khi thực sự cần
+    if (state.items.length === 0 && !orderSuccess && !loading) {
+      console.log('🔄 Redirecting to cart because: empty cart, no success, not loading');
+      window.location.href = '/store/cart';
+    }
+  }, [state.items, orderSuccess, loading]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -79,6 +79,10 @@ export default function CheckoutPage() {
 
       console.log('✅ [Checkout] LOCAL checkout success:', result);
       
+      // ✅ THÊM DEBUG
+      console.log('🔍 [DEBUG] Checkout result order data:', result.order);
+      console.log('🔍 [DEBUG] Checkout result totalAmount:', result.order?.totalAmount);
+      
       setOrderData(result.order);
       setOrderSuccess(true);
       
@@ -90,10 +94,17 @@ export default function CheckoutPage() {
     }
   };
 
-  // ✅ HELPER FUNCTION ĐỂ ĐẢM BẢO SỐ
+  // ✅ SỬA: HÀM FORMAT CURRENCY HOÀN CHỈNH
   const formatCurrency = (value: any): string => {
-    const num = Number(value);
-    return isNaN(num) ? '$0.00' : `$${num.toFixed(2)}`;
+    if (value === undefined || value === null) return '0 ₫';
+    
+    // Chuyển đổi sang number nếu là string
+    const num = typeof value === 'string' ? parseFloat(value) : Number(value);
+    
+    return new Intl.NumberFormat('vi-VN', {
+      style: 'currency',
+      currency: 'VND'
+    }).format(isNaN(num) ? 0 : num);
   };
 
   // ✅ TÍNH TOÁN TỔNG TIỀN
@@ -109,6 +120,10 @@ export default function CheckoutPage() {
   const { subtotal, shippingFee, discount, total } = calculateTotals();
 
   if (orderSuccess && orderData) {
+    // ✅ THÊM DEBUG TRONG SUCCESS PAGE
+    console.log('🔍 [DEBUG] OrderSuccess - orderData:', orderData);
+    console.log('🔍 [DEBUG] OrderSuccess - totalAmount:', orderData.totalAmount);
+
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-2xl mx-auto text-center">
@@ -120,15 +135,17 @@ export default function CheckoutPage() {
           <div className="bg-white rounded-lg shadow-md p-6 mb-6 text-left">
             <h3 className="text-xl font-bold mb-4">Thông Tin Đơn Hàng</h3>
             <div className="space-y-2">
-              <p><strong>Mã đơn hàng:</strong> {orderData.id || 'N/A'}</p>
-              <p><strong>Khách hàng:</strong> {orderData.customerInfo?.name || form.name}</p>
-              <p><strong>Email:</strong> {orderData.customerInfo?.email || form.email}</p>
-              <p><strong>Số điện thoại:</strong> {orderData.customerInfo?.phone || form.phone}</p>
-              <p><strong>Tổng tiền:</strong> {formatCurrency(orderData.total)}</p>
-              <p><strong>Phương thức thanh toán:</strong> {orderData.customerInfo?.paymentMethod || form.paymentMethod}</p>
-              <p><strong>Địa chỉ giao hàng:</strong> {orderData.customerInfo?.shippingAddress || form.shippingAddress}</p>
-              <p><strong>Trạng thái:</strong> {orderData.status || 'Đang xử lý'}</p>
-              <p><strong>Ngày đặt:</strong> {new Date(orderData.createdAt).toLocaleDateString('vi-VN')}</p>
+              {/* ✅ SỬA: Dùng đúng field names từ API response */}
+              <p><strong>Mã đơn hàng:</strong> {orderData.orderNumber || orderData.id}</p>
+              <p><strong>Khách hàng:</strong> {orderData.customerName || form.name}</p>
+              <p><strong>Email:</strong> {orderData.customerEmail || form.email}</p>
+              <p><strong>Số điện thoại:</strong> {orderData.customerPhone || form.phone}</p>
+              {/* ✅ QUAN TRỌNG: Dùng totalAmount từ API */}
+              <p><strong>Tổng tiền:</strong> {formatCurrency(orderData.totalAmount)}</p>
+              <p><strong>Phương thức thanh toán:</strong> {orderData.paymentMethod || form.paymentMethod}</p>
+              <p><strong>Địa chỉ giao hàng:</strong> {orderData.shippingAddress || form.shippingAddress}</p>
+              <p><strong>Trạng thái:</strong> {orderData.status || 'Pending'}</p>
+              <p><strong>Ngày đặt:</strong> {orderData.createdAt ? new Date(orderData.createdAt).toLocaleDateString('vi-VN') : new Date().toLocaleDateString('vi-VN')}</p>
             </div>
           </div>
 
@@ -140,7 +157,7 @@ export default function CheckoutPage() {
                 <div key={item.id} className="flex justify-between items-center border-b pb-3">
                   <div className="flex items-center space-x-3">
                     <img 
-                      src={item.image} 
+                      src={item.productImage} 
                       alt={item.productName}
                       className="w-12 h-12 object-cover rounded"
                     />
@@ -149,7 +166,7 @@ export default function CheckoutPage() {
                       <p className="text-sm text-gray-600">Số lượng: {item.quantity}</p>
                     </div>
                   </div>
-                  <p className="font-semibold">{formatCurrency(item.total)}</p>
+                  <p className="font-semibold">{formatCurrency(item.totalPrice)}</p>
                 </div>
               ))}
             </div>
@@ -356,16 +373,6 @@ export default function CheckoutPage() {
                 </div>
               </div>
             </div>
-
-            {/* Debug Info - Chỉ hiển thị trong development */}
-            {process.env.NODE_ENV === 'development' && (
-              <div className="mt-4 p-3 bg-yellow-100 border border-yellow-400 rounded text-xs">
-                <p><strong>Debug Info:</strong></p>
-                <p>Items in cart: {state.items.length}</p>
-                <p>Cart total: {state.total}</p>
-                <p>Calculated total: {total}</p>
-              </div>
-            )}
           </div>
         </div>
       )}

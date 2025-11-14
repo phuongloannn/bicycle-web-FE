@@ -321,31 +321,59 @@ export function CartProvider({ children }: { children: ReactNode }) {
     return Promise.resolve();
   };
 
-  // ✅ CHECKOUT - TẠO CUSTOMER MỚI + ORDER + UPDATE STOCK
-  const checkout = async (customerInfo: any) => {
-    try {
-      dispatch({ type: 'SET_LOADING', payload: { loading: true } });
+// ✅ CHECKOUT - KIỂM TRA CUSTOMER ĐÃ TỒN TẠI + TẠO CUSTOMER MỚI + ORDER + UPDATE STOCK
+const checkout = async (customerInfo: any) => {
+  try {
+    dispatch({ type: 'SET_LOADING', payload: { loading: true } });
+    
+    console.log('💰 [CartContext] Guest Checkout - Kiểm tra và tạo customer');
+
+    // VALIDATION
+    if (state.items.length === 0) {
+      throw new Error('Giỏ hàng trống');
+    }
+
+    if (!customerInfo.name || !customerInfo.email || !customerInfo.phone || !customerInfo.shippingAddress) {
+      throw new Error('Vui lòng điền đầy đủ thông tin bắt buộc (tên, email, số điện thoại, địa chỉ giao hàng)');
+    }
+
+    // ✅ 1. TÍNH TOTAL TRƯỚC
+    const calculatedTotal = state.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    console.log('💰 Calculated total:', calculatedTotal);
+
+    if (calculatedTotal === 0) {
+      throw new Error('Lỗi tính toán tổng tiền. Vui lòng thử lại.');
+    }
+
+    let customerId: string;
+
+    // ✅ 2. KIỂM TRA CUSTOMER ĐÃ TỒN TẠI THEO EMAIL
+    console.log(`🔍 Kiểm tra customer tồn tại với email: ${customerInfo.email}`);
+    const existCustomerResponse = await fetch(`http://localhost:3000/customers/bymail/${customerInfo.email}`, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' }
+    });
+
+    if (existCustomerResponse.ok) {
+      // ✅ CUSTOMER ĐÃ TỒN TẠI - SỬ DỤNG CUSTOMER HIỆN CÓ
+      const existingCustomer = await existCustomerResponse.json();
+      customerId = existingCustomer.data.id;
+      console.log('✅ Sử dụng customer đã tồn tại:', existingCustomer.data.name, 'ID:', customerId);
       
-      console.log('💰 [CartContext] Guest Checkout - Tạo customer mới');
-
-      // VALIDATION
-      if (state.items.length === 0) {
-        throw new Error('Giỏ hàng trống');
-      }
-
-      if (!customerInfo.name || !customerInfo.email || !customerInfo.phone || !customerInfo.shippingAddress) {
-        throw new Error('Vui lòng điền đầy đủ thông tin bắt buộc (tên, email, số điện thoại, địa chỉ giao hàng)');
-      }
-
-      // ✅ 1. TÍNH TOTAL TRƯỚC
-      const calculatedTotal = state.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-      console.log('💰 Calculated total:', calculatedTotal);
-
-      if (calculatedTotal === 0) {
-        throw new Error('Lỗi tính toán tổng tiền. Vui lòng thử lại.');
-      }
-
-      // ✅ 2. TẠO CUSTOMER MỚI CHO GUEST
+      // ✅ CẬP NHẬT THÔNG TIN CUSTOMER NẾU CẦN
+      console.log('🔄 Cập nhật thông tin customer nếu có thay đổi...');
+      await fetch(`http://localhost:3000/customers/${customerId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: customerInfo.name,
+          phone: customerInfo.phone,
+          address: customerInfo.shippingAddress
+        })
+      });
+      
+    } else if (existCustomerResponse.status === 404) {
+      // ✅ CUSTOMER CHƯA TỒN TẠI - TẠO CUSTOMER MỚI
       console.log('🔄 Tạo customer mới cho guest...');
       const newCustomerResponse = await fetch('http://localhost:3000/customers', {
         method: 'POST',
@@ -363,102 +391,102 @@ export function CartProvider({ children }: { children: ReactNode }) {
       }
 
       const newCustomer = await newCustomerResponse.json();
-      console.log('✅ Created new guest customer:', newCustomer);
-    
-      const customerId = newCustomer.data.id;
+      customerId = newCustomer.data.id;
       console.log('✅ Created new guest customer:', customerInfo.name, 'ID:', customerId);
-
-      // ✅ 3. TẠO ORDER VỚI CUSTOMER ID MỚI
-      const orderData = {
-        customerId: customerId, // ✅ Dùng ID customer mới
-        items: state.items.map(item => ({
-          productId: item.productId,
-          quantity: item.quantity,
-          unitPrice: item.price
-        })),
-        shippingAddress: customerInfo.shippingAddress,
-        billingAddress: customerInfo.billingAddress || customerInfo.shippingAddress,
-        paymentMethod: customerInfo.paymentMethod || 'COD'
-      };
-
-      console.log('🔄 Creating order with total:', calculatedTotal);
-      
-      // ✅ GỬI REQUEST TẠO ORDER
-      const orderResponse = await fetch('http://localhost:3000/orders', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(orderData)
-      });
-      // ✅ THÊM DEBUG CHI TIẾT
-console.log('🔍 [DEBUG] Order Response Status:', orderResponse.status);
-console.log('🔍 [DEBUG] Order Response OK:', orderResponse.ok);
-
-if (!orderResponse.ok) {
-  // ✅ LẤY THÔNG TIN LỖI CHI TIẾT
-  const errorText = await orderResponse.text();
-  console.error('❌ [DEBUG] Order Error Response:', errorText);
-  console.error('❌ [DEBUG] Order Data Sent:', orderData);
-  
-  throw new Error(`Failed to create order: ${orderResponse.status} - ${errorText}`);
-}
-
-      if (!orderResponse.ok) {
-        throw new Error('Failed to create order');
-      }
-
-      const createdOrder = await orderResponse.json();
-      console.log('✅ Order created:', createdOrder);
-
-      // ✅ 4. CẬP NHẬT STOCK SẢN PHẨM TRONG DATABASE
-      console.log('🔄 Updating product stocks...');
-      for (const item of state.items) {
-        try {
-          // Lấy thông tin sản phẩm hiện tại từ database
-          const productResponse = await fetch(`http://localhost:3000/products/${item.productId}`);
-          const currentProduct = await productResponse.json();
-          
-          // Tính stock mới
-          const newStock = currentProduct.quantity - item.quantity; // ✅ Dùng 'quantity' thay vì 'stock'
-          if (newStock < 0) {
-throw new Error(`Sản phẩm không đủ hàng`);
-          }
-
-          // Cập nhật stock trong database (PATCH)
-          await fetch(`http://localhost:3000/products/${item.productId}`, {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-              quantity: newStock // ✅ Cập nhật field 'quantity'
-            })
-          });
-console.log(`✅ Stock updated: ${currentProduct.quantity} → ${newStock}`);
-        } catch (stockError) {
-          console.error(`❌ Stock update failed for product ${item.productId}:`, stockError);
-throw new Error(`Cập nhật kho thất bại cho sản phẩm`);
-        }
-      }
-
-      // ✅ 5. XÓA GIỎ HÀNG SAU KHI THÀNH CÔNG
-      await clearCart();
-
-      return {
-        success: true,
-        message: 'Đặt hàng thành công! Cảm ơn bạn đã mua sắm.',
-        orderId: createdOrder.id,
-        orderNumber: createdOrder.orderNumber,
-        order: createdOrder,
-        total: calculatedTotal, // ✅ Trả về total đã tính
-        customerId: customerId
-      };
-
-    } catch (error: any) {
-      console.error('❌ [CartContext] checkout ERROR:', error);
-      const errorMessage = error.response?.data?.message || error.message || 'Có lỗi xảy ra khi đặt hàng';
-      throw new Error(errorMessage);
-    } finally {
-      dispatch({ type: 'SET_LOADING', payload: { loading: false } });
+    } else {
+      // ❌ LỖI KHI KIỂM TRA CUSTOMER
+      throw new Error('Không thể kiểm tra thông tin khách hàng');
     }
-  };
+
+    // ✅ 3. TẠO ORDER VỚI CUSTOMER ID
+    const orderData = {
+      customerId: customerId,
+      items: state.items.map(item => ({
+        productId: item.productId,
+        quantity: item.quantity,
+        unitPrice: item.price
+      })),
+      
+      shippingAddress: customerInfo.shippingAddress,
+      billingAddress: customerInfo.billingAddress || customerInfo.shippingAddress,
+      paymentMethod: customerInfo.paymentMethod || 'COD'
+    };
+
+    console.log('🔄 Creating order with total:', calculatedTotal);
+    
+    // ✅ GỬI REQUEST TẠO ORDER
+    const orderResponse = await fetch('http://localhost:3000/orders', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(orderData)
+    });
+
+    // ✅ THÊM DEBUG CHI TIẾT
+    console.log('🔍 [DEBUG] Order Response Status:', orderResponse.status);
+    console.log('🔍 [DEBUG] Order Response OK:', orderResponse.ok);
+
+    if (!orderResponse.ok) {
+      // ✅ LẤY THÔNG TIN LỖI CHI TIẾT
+      const errorText = await orderResponse.text();
+      console.error('❌ [DEBUG] Order Error Response:', errorText);
+      console.error('❌ [DEBUG] Order Data Sent:', orderData);
+      
+      throw new Error(`Failed to create order: ${orderResponse.status} - ${errorText}`);
+    }
+
+    const createdOrder = await orderResponse.json();
+    console.log('✅ Order created:', createdOrder);
+
+    // ✅ 4. CẬP NHẬT STOCK SẢN PHẨM TRONG DATABASE
+    console.log('🔄 Updating product stocks...');
+    for (const item of state.items) {
+      try {
+        // Lấy thông tin sản phẩm hiện tại từ database
+        const productResponse = await fetch(`http://localhost:3000/products/${item.productId}`);
+        const currentProduct = await productResponse.json();
+        
+        // Tính stock mới
+        const newStock = currentProduct.quantity - item.quantity;
+        if (newStock < 0) {
+          throw new Error(`Sản phẩm không đủ hàng`);
+        }
+
+        // Cập nhật stock trong database (PATCH)
+        await fetch(`http://localhost:3000/products/${item.productId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            quantity: newStock
+          })
+        });
+        console.log(`✅ Stock updated: ${currentProduct.quantity} → ${newStock}`);
+      } catch (stockError) {
+        console.error(`❌ Stock update failed for product ${item.productId}:`, stockError);
+        throw new Error(`Cập nhật kho thất bại cho sản phẩm`);
+      }
+    }
+
+    // ✅ 5. XÓA GIỎ HÀNG SAU KHI THÀNH CÔNG
+    await clearCart();
+
+    return {
+      success: true,
+      message: 'Đặt hàng thành công! Cảm ơn bạn đã mua sắm.',
+      orderId: createdOrder.id,
+      orderNumber: createdOrder.orderNumber,
+      order: createdOrder,
+      total: calculatedTotal,
+      customerId: customerId
+    };
+
+  } catch (error: any) {
+    console.error('❌ [CartContext] checkout ERROR:', error);
+    const errorMessage = error.response?.data?.message || error.message || 'Có lỗi xảy ra khi đặt hàng';
+    throw new Error(errorMessage);
+  } finally {
+    dispatch({ type: 'SET_LOADING', payload: { loading: false } });
+  }
+};
 
   return (
     <CartContext.Provider value={{

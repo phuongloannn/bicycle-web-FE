@@ -7,11 +7,13 @@ interface OrderDetailProps {
 }
 
 const OrderDetail: React.FC<OrderDetailProps> = ({ order, onClose }) => {
-  const formatCurrency = (amount: number) => {
+  const formatCurrency = (amount: number | string) => {
+    // ✅ THÊM DÒNG NÀY - CHUYỂN SANG NUMBER
+    const numericAmount = typeof amount === 'string' ? parseFloat(amount) : amount;
     return new Intl.NumberFormat('vi-VN', {
       style: 'currency',
       currency: 'VND'
-    }).format(amount);
+    }).format(numericAmount);
   };
 
   const formatDate = (dateString: string) => {
