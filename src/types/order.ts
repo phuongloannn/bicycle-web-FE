@@ -8,14 +8,13 @@ export enum OrderStatus {
 }
 
 export interface OrderItem {
-    customerId?: number; // ✅ Thêm optional
-
   id: number;
   productId: number;
   productName: string;
   quantity: number;
-  unitPrice: number;
-  totalPrice: number;
+  unitPrice: number | string; // ✅ THÊM | string
+  totalPrice: number | string; // ✅ THÊM | string
+  productImage?: string;
 }
 
 export interface Order {
@@ -23,13 +22,19 @@ export interface Order {
   orderNumber: string;
   customerId: number;
   customerName: string;
-  totalAmount: number;
+  customerEmail?: string;
+  customerPhone?: string;
+  totalAmount: number | string; // ✅ THÊM | string
   status: OrderStatus;
   shippingAddress: string;
   billingAddress: string;
   paymentMethod: string;
   isPaid: boolean;
   paidAt: string | null;
+  customerNotes?: string;
+  cancellationReason?: string;
+  completedAt?: string;
+  cancelledAt?: string;
   items: OrderItem[];
   createdAt: string;
   updatedAt: string;
@@ -45,6 +50,7 @@ export interface CreateOrderRequest {
   shippingAddress?: string;
   billingAddress?: string;
   paymentMethod?: string;
+  totalAmount?: number;
 }
 
 export interface UpdateOrderRequest {
