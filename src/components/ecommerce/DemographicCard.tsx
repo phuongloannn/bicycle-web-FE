@@ -1,14 +1,100 @@
 "use client";
-import Image from "next/image";
-
-import CountryMap from "./CountryMap";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import axios from "axios";
 import { MoreDotIcon } from "@/icons";
 import { Dropdown } from "../ui/dropdown/Dropdown";
 import { DropdownItem } from "../ui/dropdown/DropdownItem";
 
+interface TopProduct {
+  id: number;
+  name: string;
+  sales: number;
+  revenue: number;
+  imageUrl: string;
+}
+
+interface ProductItemProps {
+  product: TopProduct;
+  apiBase: string;
+  formatCurrency: (amount: number) => string;
+}
+
+function ProductItem({ product, apiBase, formatCurrency }: ProductItemProps) {
+  const [imageError, setImageError] = useState(false);
+
+  return (
+    <div className="flex items-center justify-between">
+      <div className="flex items-center gap-3">
+        <div className="flex items-center justify-center w-12 h-12 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800">
+          {product.imageUrl && !imageError ? (
+            <img
+              src={`${apiBase}${product.imageUrl}`}
+              alt={product.name}
+              className="w-full h-full object-cover"
+              onError={() => setImageError(true)}
+            />
+          ) : (
+            <svg
+              width="48"
+              height="48"
+              viewBox="0 0 48 48"
+              fill="currentColor"
+              className="!text-gray-800 dark:!text-white"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <circle cx="12" cy="36" r="4" />
+              <circle cx="36" cy="36" r="4" />
+              <path d="M16 36L20 24L28 20L32 36" stroke="currentColor" strokeWidth="2" fill="none" />
+              <path d="M20 24L24 16L28 20" stroke="currentColor" strokeWidth="2" fill="none" />
+              <path d="M16 36L12 36M36 36L32 36" stroke="currentColor" strokeWidth="2" />
+            </svg>
+          )}
+        </div>
+        <div>
+          <p className="text-theme-sm font-semibold !text-gray-800 dark:!text-white">
+            {product.name}
+          </p>
+        </div>
+      </div>
+
+      <div className="flex items-center gap-3">
+        <p className="text-theme-sm font-medium !text-gray-800 dark:!text-white">
+          {product.sales} (s)
+        </p>
+        <p className="text-theme-sm font-medium !text-gray-800 dark:!text-white">
+          {formatCurrency(product.revenue)}
+        </p>
+      </div>
+    </div>
+  );
+}
+
 export default function DemographicCard() {
   const [isOpen, setIsOpen] = useState(false);
+  const [products, setProducts] = useState<TopProduct[]>([]);
+  const [loading, setLoading] = useState(true);
+  const API_BASE = 'http://localhost:3000';
+
+  useEffect(() => {
+    const fetchTopProducts = async () => {
+      try {
+        const apiUrl = `${API_BASE}/dashboard/top-products`;
+        console.log('📡 Đang gọi API:', apiUrl);
+        const response = await axios.get<TopProduct[]>(apiUrl);
+        console.log('✅ Dữ liệu nhận được:', response.data);
+        setProducts(response.data);
+      } catch (error) {
+        console.error(' Lỗi khi tải danh sách sản phẩm:', error);
+        if (axios.isAxiosError(error)) {
+          console.error('Chi tiết lỗi:', error.response?.data || error.message);
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTopProducts();
+  }, []);
 
   function toggleDropdown() {
     setIsOpen(!isOpen);
@@ -18,16 +104,20 @@ export default function DemographicCard() {
     setIsOpen(false);
   }
 
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('vi-VN', {
+      style: 'currency',
+      currency: 'VND'
+    }).format(amount);
+  };
+
   return (
     <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] sm:p-6">
       <div className="flex justify-between">
         <div>
-          <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
-            Customers Demographic
+          <h3 className="text-lg font-semibold !text-gray-800 dark:!text-white">
+            Best Selling Products
           </h3>
-          <p className="mt-1 text-gray-500 text-theme-sm dark:text-gray-400">
-            Number of customer based on country
-          </p>
         </div>
 
         <div className="relative inline-block">
@@ -54,77 +144,26 @@ export default function DemographicCard() {
           </Dropdown>
         </div>
       </div>
-      <div className="px-4 py-6 my-6 overflow-hidden border border-gary-200 rounded-2xl bg-gray-50 dark:border-gray-800 dark:bg-gray-900 sm:px-6">
-        <div
-          id="mapOne"
-          className="mapOne map-btn -mx-4 -my-6 h-[212px] w-[252px] 2xsm:w-[307px] xsm:w-[358px] sm:-mx-6 md:w-[668px] lg:w-[634px] xl:w-[393px] 2xl:w-[554px]"
-        >
-          <CountryMap />
-        </div>
-      </div>
 
-      <div className="space-y-5">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="items-center w-full rounded-full max-w-8">
-              <Image
-                width={48}
-                height={48}
-                src="/images/country/country-01.svg"
-                alt="usa"
-                className="w-full"
-              />
-            </div>
-            <div>
-              <p className="font-semibold text-gray-800 text-theme-sm dark:text-white/90">
-                USA
-              </p>
-              <span className="block text-gray-500 text-theme-xs dark:text-gray-400">
-                2,379 Customers
-              </span>
-            </div>
+      <div className="mt-6 space-y-5">
+        {loading ? (
+          <div className="flex justify-center items-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-800 dark:border-white"></div>
           </div>
-
-          <div className="flex w-full max-w-[140px] items-center gap-3">
-            <div className="relative block h-2 w-full max-w-[100px] rounded-sm bg-gray-200 dark:bg-gray-800">
-              <div className="absolute left-0 top-0 flex h-full w-[79%] items-center justify-center rounded-sm bg-brand-500 text-xs font-medium text-white"></div>
-            </div>
-            <p className="font-medium text-gray-800 text-theme-sm dark:text-white/90">
-              79%
-            </p>
+        ) : products.length === 0 ? (
+          <div className="text-center py-8">
+            <p className="!text-gray-800 dark:!text-gray-400">Không có sản phẩm nào</p>
           </div>
-        </div>
-
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="items-center w-full rounded-full max-w-8">
-              <Image
-                width={48}
-                height={48}
-                className="w-full"
-                src="/images/country/country-02.svg"
-                alt="france"
-              />
-            </div>
-            <div>
-              <p className="font-semibold text-gray-800 text-theme-sm dark:text-white/90">
-                France
-              </p>
-              <span className="block text-gray-500 text-theme-xs dark:text-gray-400">
-                589 Customers
-              </span>
-            </div>
-          </div>
-
-          <div className="flex w-full max-w-[140px] items-center gap-3">
-            <div className="relative block h-2 w-full max-w-[100px] rounded-sm bg-gray-200 dark:bg-gray-800">
-              <div className="absolute left-0 top-0 flex h-full w-[23%] items-center justify-center rounded-sm bg-brand-500 text-xs font-medium text-white"></div>
-            </div>
-            <p className="font-medium text-gray-800 text-theme-sm dark:text-white/90">
-              23%
-            </p>
-          </div>
-        </div>
+        ) : (
+          products.map((product) => (
+            <ProductItem
+              key={product.id}
+              product={product}
+              apiBase={API_BASE}
+              formatCurrency={formatCurrency}
+            />
+          ))
+        )}
       </div>
     </div>
   );
