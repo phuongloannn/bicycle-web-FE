@@ -97,8 +97,7 @@ const OrderList: React.FC = () => {
     <div className="p-6">
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-800">📦 Quản lý Đơn hàng</h1>
-        <p className="text-gray-600">Quản lý và theo dõi tất cả đơn hàng</p>
+   
       </div>
 
       {/* Filters */}
