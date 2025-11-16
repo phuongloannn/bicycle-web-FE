@@ -25,7 +25,7 @@ export default function AuthLayout({
                   <Image
                     width={231}
                     height={48}
-                    src="/images/logo/auth-logo.svg" // ✅ Sửa đường dẫn
+                    src="/images/logo/Logo.png" // ✅ Sửa đường dẫn
                     alt="Logo"
                     className="w-auto h-auto" // ✅ THÊM DÒNG NÀY
                     priority
