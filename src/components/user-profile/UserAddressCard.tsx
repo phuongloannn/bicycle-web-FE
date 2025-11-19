@@ -15,7 +15,7 @@ export default function UserAddressCard() {
     cityState: "Hà Nội, Việt Nam",
     postalCode: "100000", 
     taxId: "MST123456789",
-    address: "123 Đường ABC, Quận XYZ",
+    address: "1 Trịnh Văn Bô, Nam Từ Liêm, Hà Nội",
     phone: "+84 123 456 789"
   });
 
