@@ -56,7 +56,7 @@ export default function AlertsCard() {
     {
       id: 1,
       message: alerts.lowStockProducts > 0 
-        ? `${alerts.lowStockProducts} products are low in stock,`
+        ? `${alerts.lowStockProducts} products are low in stock.`
         : null,
     },
     {
