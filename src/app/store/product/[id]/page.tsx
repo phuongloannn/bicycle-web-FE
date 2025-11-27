@@ -1,11 +1,20 @@
 // src/app/store/product/[id]/page.tsx
 'use client';
+
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Product } from '../../../../types/store';
 import { StoreService } from '../../../../services/StoreService';
-import { useCart } from "../../../../contexts/CartContext";
+import { useCart } from '../../../../contexts/CartContext';
+
+// ⭐ Kiểu dữ liệu cho Review
+interface ProductReview {
+  user: string;
+  rating: number; // 1–5
+  comment: string;
+  date: string; // YYYY-MM-DD
+}
 
 export default function ProductDetailPage() {
   const params = useParams();
@@ -18,6 +27,12 @@ export default function ProductDetailPage() {
   const [quantity, setQuantity] = useState(1);
   const [imageStatus, setImageStatus] = useState<'loading' | 'success' | 'error'>('loading');
   const { addToCart } = useCart();
+
+  // ⭐ STATE REVIEW
+  const [reviews, setReviews] = useState<ProductReview[]>([]);
+  const [userReview, setUserReview] = useState('');
+  const [rating, setRating] = useState(0);
+  const [hasPurchased, setHasPurchased] = useState(false);
 
   // 🔹 HÀM LẤY URL ẢNH
   const getImageUrl = (product: Product | null): string | null => {
@@ -36,17 +51,14 @@ export default function ProductDetailPage() {
   const processImageUrl = (url: string | null): string => {
     if (!url) return '/images/placeholder-product.jpg';
 
-    // Nếu URL đã là full URL thì giữ nguyên
     if (url.startsWith('http')) {
       return url;
     }
 
-    // Nếu là đường dẫn tương đối (/uploads/...) thì chuyển thành full URL đến backend
     if (url.startsWith('/uploads/')) {
       return `http://localhost:3000${url}`;
     }
 
-    // Mặc định
     return '/images/placeholder-product.jpg';
   };
 
@@ -54,9 +66,10 @@ export default function ProductDetailPage() {
   useEffect(() => {
     async function loadProductData() {
       try {
+        setLoading(true);
         const storeService = new StoreService();
         const allProducts = await storeService.getProducts();
-        const productData = allProducts.find(p => p.id === productId);
+        const productData = allProducts.find((p) => p.id === productId);
 
         if (!productData) throw new Error('Product not found');
 
@@ -64,7 +77,7 @@ export default function ProductDetailPage() {
         setProduct(productData);
 
         const related = allProducts
-          .filter(p => p.category === productData.category && p.id !== productId)
+          .filter((p) => p.category === productData.category && p.id !== productId)
           .slice(0, 4);
         setRelatedProducts(related);
       } catch (error) {
@@ -85,8 +98,7 @@ export default function ProductDetailPage() {
     if (product) {
       const imageUrl = processImageUrl(getImageUrl(product));
       console.log('🔍 Image URL:', imageUrl);
-      
-      // Đơn giản: giả sử ảnh luôn tồn tại nếu có URL
+
       if (imageUrl && imageUrl !== '/images/placeholder-product.jpg') {
         setImageStatus('success');
       } else {
@@ -95,19 +107,44 @@ export default function ProductDetailPage() {
     }
   }, [product]);
 
-  // 🔹 ADD TO CART - CHỈ CÒN 1 HÀM DUY NHẤT
+  // 🧩 USE EFFECT 3: Fake reviews + check purchased
+  useEffect(() => {
+    if (!product) return;
+
+    // ⭐ Dummy reviews để demo
+    const dummyReviews: ProductReview[] = [
+      {
+        user: 'Nguyễn Văn A',
+        rating: 5,
+        comment: 'Sản phẩm rất tốt, chất lượng vượt mong đợi!',
+        date: '2024-01-12',
+      },
+      {
+        user: 'Trần Thị B',
+        rating: 4,
+        comment: 'Hàng đúng mô tả, giao nhanh, đóng gói cẩn thận.',
+        date: '2024-02-03',
+      },
+    ];
+
+    setReviews(dummyReviews);
+
+    // TODO: sau này check từ backend xem user có order chứa productId hay không
+    setHasPurchased(true); // Tạm thời: giả lập là đã mua sản phẩm
+  }, [product]);
+
+  // 🔹 ADD TO CART
   const handleAddToCart = async () => {
     if (!product) return;
-    
+
     console.log('🛒 [ProductPage] Adding to cart:', {
       productId: product.id,
-      productName: product.name, 
+      productName: product.name,
       imageUrl: product.image || product.imageUrl || product.image_url,
-      quantity: quantity
+      quantity: quantity,
     });
 
     try {
-      // ✅ Gọi hàm addToCart từ context
       await addToCart(product, quantity);
       alert(`Đã thêm ${quantity} sản phẩm vào giỏ hàng!`);
     } catch (error) {
@@ -116,8 +153,28 @@ export default function ProductDetailPage() {
     }
   };
 
+  // ⭐ GỬI REVIEW
+  const handleSubmitReview = () => {
+    if (!rating || !userReview.trim()) {
+      alert('Vui lòng chọn số sao và nhập nội dung review!');
+      return;
+    }
+
+    const newReview: ProductReview = {
+      user: 'Bạn',
+      rating,
+      comment: userReview.trim(),
+      date: new Date().toISOString().split('T')[0],
+    };
+
+    setReviews([newReview, ...reviews]);
+    setUserReview('');
+    setRating(0);
+    alert('Cảm ơn bạn đã đánh giá sản phẩm!');
+  };
+
   const isInStock = product && (product.stock > 0 || product.quantity > 0);
-  const stockQuantity = product ? (product.stock || product.quantity || 0) : 0;
+  const stockQuantity = product ? product.stock || product.quantity || 0 : 0;
   const mainImageUrl = product ? processImageUrl(getImageUrl(product)) : '';
 
   // 🔹 Loading UI
@@ -148,14 +205,24 @@ export default function ProductDetailPage() {
       <nav className="flex mb-8" aria-label="Breadcrumb">
         <ol className="flex items-center space-x-4">
           <li>
-            <Link href="/store" className="text-gray-400 hover:text-gray-500">Trang chủ</Link>
+            <Link href="/store" className="text-gray-400 hover:text-gray-500">
+              Trang chủ
+            </Link>
           </li>
-          <li><span className="text-gray-400">/</span></li>
           <li>
-            <Link href="/store/products" className="text-gray-400 hover:text-gray-500">Sản phẩm</Link>
+            <span className="text-gray-400">/</span>
           </li>
-          <li><span className="text-gray-400">/</span></li>
-          <li><span className="text-gray-900 font-medium">{product.name}</span></li>
+          <li>
+            <Link href="/store/products" className="text-gray-400 hover:text-gray-500">
+              Sản phẩm
+            </Link>
+          </li>
+          <li>
+            <span className="text-gray-400">/</span>
+          </li>
+          <li>
+            <span className="text-gray-900 font-medium">{product.name}</span>
+          </li>
         </ol>
       </nav>
 
@@ -187,9 +254,9 @@ export default function ProductDetailPage() {
                 <div className="text-lg font-semibold">Không thể tải ảnh</div>
                 <div className="text-sm mt-2">Product ID: {product.id}</div>
                 <div className="text-xs mt-1 text-gray-400">
-                  <a 
-                    href={mainImageUrl} 
-                    target="_blank" 
+                  <a
+                    href={mainImageUrl}
+                    target="_blank"
                     rel="noopener noreferrer"
                     className="text-blue-500 hover:underline"
                   >
@@ -201,7 +268,9 @@ export default function ProductDetailPage() {
           </div>
           <div className="p-3 bg-gray-100 border-t text-xs text-gray-600">
             <strong>Image Status:</strong> {imageStatus}
-            <div className="mt-1 break-all"><strong>URL:</strong> {mainImageUrl}</div>
+            <div className="mt-1 break-all">
+              <strong>URL:</strong> {mainImageUrl}
+            </div>
           </div>
         </div>
 
@@ -212,9 +281,11 @@ export default function ProductDetailPage() {
             <span className="text-3xl font-bold text-blue-600">
               {Number(product.price).toLocaleString('vi-VN')} đ
             </span>
-            <span className={`ml-4 px-3 py-1 rounded-full text-sm font-semibold ${
-              isInStock ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-            }`}>
+            <span
+              className={`ml-4 px-3 py-1 rounded-full text-sm font-semibold ${
+                isInStock ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+              }`}
+            >
               {isInStock ? `Còn ${stockQuantity} sản phẩm` : 'Hết hàng'}
             </span>
           </div>
@@ -238,15 +309,15 @@ export default function ProductDetailPage() {
               <div className="flex items-center space-x-4">
                 <span className="text-gray-700 font-medium">Số lượng:</span>
                 <div className="flex items-center border border-gray-300 rounded-lg">
-                  <button 
+                  <button
                     onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                    className="px-4 py-2 text-gray-600 hover:bg-gray-100" 
+                    className="px-4 py-2 text-gray-600 hover:bg-gray-100"
                     disabled={quantity <= 1}
                   >
                     -
                   </button>
                   <span className="px-4 py-2 text-gray-900 font-medium">{quantity}</span>
-                  <button 
+                  <button
                     onClick={() => setQuantity(Math.min(stockQuantity, quantity + 1))}
                     className="px-4 py-2 text-gray-600 hover:bg-gray-100"
                     disabled={quantity >= stockQuantity}
@@ -266,6 +337,77 @@ export default function ProductDetailPage() {
         </div>
       </div>
 
+      {/* ⭐ REVIEW SECTION */}
+      <div className="mt-16 border-t pt-10">
+        <h2 className="text-2xl font-bold text-gray-900 mb-6">Đánh giá sản phẩm</h2>
+
+        {/* FORM GỬI REVIEW – chỉ hiển thị nếu hasPurchased = true */}
+        {hasPurchased ? (
+          <div className="mb-10 p-6 bg-gray-50 rounded-lg border">
+            <h3 className="text-xl font-semibold mb-4">Viết đánh giá của bạn</h3>
+
+            {/* Rating stars */}
+            <div className="flex items-center gap-2 mb-4">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <button
+                  key={star}
+                  type="button"
+                  onClick={() => setRating(star)}
+                  className={`text-3xl ${
+                    rating >= star ? 'text-yellow-400' : 'text-gray-300'
+                  }`}
+                >
+                  ★
+                </button>
+              ))}
+            </div>
+
+            <textarea
+              value={userReview}
+              onChange={(e) => setUserReview(e.target.value)}
+              placeholder="Nhập cảm nhận về sản phẩm..."
+              className="w-full border rounded-lg p-3 mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              rows={4}
+            />
+
+            <button
+              type="button"
+              onClick={handleSubmitReview}
+              className="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700"
+            >
+              Gửi đánh giá
+            </button>
+          </div>
+        ) : (
+          <p className="text-gray-500 mb-6 italic">
+            *Bạn cần mua sản phẩm này để gửi đánh giá.
+          </p>
+        )}
+
+        {/* DANH SÁCH REVIEW */}
+        <div className="space-y-6">
+          {reviews.length === 0 && (
+            <p className="text-gray-500">Chưa có đánh giá nào.</p>
+          )}
+
+          {reviews.map((review, index) => (
+            <div key={index} className="border rounded-lg p-5 bg-white shadow-sm">
+              <div className="flex items-center justify-between mb-1">
+                <h4 className="font-semibold">{review.user}</h4>
+                <span className="text-sm text-gray-500">{review.date}</span>
+              </div>
+
+              <div className="flex text-yellow-400 text-lg my-1">
+                {'★'.repeat(review.rating)}
+                {'☆'.repeat(5 - review.rating)}
+              </div>
+
+              <p className="text-gray-700 mt-1">{review.comment}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
       {/* SẢN PHẨM LIÊN QUAN */}
       {relatedProducts.length > 0 && (
         <div className="mt-16">
@@ -274,14 +416,14 @@ export default function ProductDetailPage() {
             {relatedProducts.map((relatedProduct) => {
               const relatedImageUrl = processImageUrl(getImageUrl(relatedProduct));
               return (
-                <Link 
-                  key={relatedProduct.id} 
+                <Link
+                  key={relatedProduct.id}
                   href={`/store/product/${relatedProduct.id}`}
                   className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300"
                 >
                   <div className="h-48 bg-gray-200 flex items-center justify-center">
-                    <img 
-                      src={relatedImageUrl} 
+                    <img
+                      src={relatedImageUrl}
                       alt={relatedProduct.name}
                       className="w-full h-full object-cover"
                       onError={(e) => {
@@ -290,7 +432,9 @@ export default function ProductDetailPage() {
                     />
                   </div>
                   <div className="p-4">
-                    <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2">{relatedProduct.name}</h3>
+                    <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2">
+                      {relatedProduct.name}
+                    </h3>
                     <p className="text-blue-600 font-bold">
                       {Number(relatedProduct.price).toLocaleString('vi-VN')} đ
                     </p>

@@ -91,31 +91,45 @@ export class StoreService {
     return response.json();
   }
 
-  async getCategories(): Promise<string[]> {
-    try {
-      const products = await this.getProducts();
-      const categories = [...new Set(products.map(product => product.category))];
-      return categories.filter(category => category && category.trim() !== '');
-    } catch (error) {
-      console.error('Failed to extract categories:', error);
-      return [];
-    }
-  }
+ 
+async getProductsByCategory(categoryName: string): Promise<Product[]> {
+  const products = await this.getProducts();
+  return products.filter(product =>
+    typeof product.category === 'string' &&
+    product.category.trim().toLowerCase() === categoryName.trim().toLowerCase()
+  );
+}
 
-  async getProductsByCategory(categoryName: string): Promise<Product[]> {
+
+private transformProduct(product: Product): Product {
+  return {
+    ...product,
+    category: (product.category ?? '').toString(),
+    stock: product.stock || product.quantity || 0,
+    quantity: product.quantity || product.stock || 0
+  };
+}
+
+async getCategories(): Promise<string[]> {
+  try {
     const products = await this.getProducts();
-    return products.filter(product => 
-      product.category.toLowerCase() === categoryName.toLowerCase()
-    );
-  }
 
-  private transformProduct(product: Product): Product {
-    return {
-      ...product,
-      stock: product.stock || product.quantity || 0,
-      quantity: product.quantity || product.stock || 0
-    };
+    console.log('📦 Danh mục sản phẩm:', products.map(p => p.category));
+
+    const categories = [...new Set(
+      products
+        .map(p => typeof p.category === 'string' ? p.category.trim() : '')
+        .filter(c => c.length > 0)
+    )];
+
+    return categories;
+  } catch (error) {
+    console.error('❌ Lỗi lấy danh mục:', error);
+    return [];
   }
+}
+
+
 }
 
 export const storeService = new StoreService();

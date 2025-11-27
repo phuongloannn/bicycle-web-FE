@@ -1,9 +1,7 @@
-// src/app/store/cart/page.tsx
 'use client';
 import { useEffect } from 'react';
 import Link from 'next/link';
 import { useCart } from '@/contexts/CartContext';
-import { log } from 'console';
 
 // 🔹 Định nghĩa type cho cart item
 type CartItem = {
@@ -12,7 +10,7 @@ type CartItem = {
   price: number;
   quantity: number;
   total: number;
-  image?: string; // backend trả về image URL
+  image?: string;
 };
 
 export default function CartPage() {
@@ -25,11 +23,14 @@ export default function CartPage() {
 
   // 🔹 Hàm xử lý URL ảnh
   const getImageUrl = (item: CartItem) => {
-  if (!item.image) return '/no-image.png'; // ảnh mặc định nếu không có ảnh
-  return item.image.startsWith('http')
-    ? item.image
-    : `http://localhost:3000/uploads/${item.image}`;
-};
+    if (!item.image) return '/images/placeholder-product.jpg';
+
+    if (item.image.startsWith('http')) return item.image;
+    if (item.image.startsWith('/images')) return item.image;
+
+    return `/uploads/${item.image}`;
+  };
+
 
 
   // 🔹 Update quantity
@@ -42,6 +43,7 @@ export default function CartPage() {
   const handleRemoveItem = async (cartItemId: number) => {
     await removeFromCart(cartItemId);
   };
+
 
   // 🔹 Tổng tiền
   const getTotalPrice = () => {
@@ -66,18 +68,20 @@ export default function CartPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Danh sách sản phẩm */}
           <div className="lg:col-span-2 space-y-4">
-            {cartItems.map((item) => (
+            {cartItems.map((item) => 
+            ( 
               <div key={item.id} className="bg-white rounded-lg shadow-md p-4 flex items-center space-x-4">
-                
+
                 {/* ẢNH SẢN PHẨM */}
-              
                 <div className="w-24 h-24 flex-shrink-0 bg-gray-100 rounded-lg overflow-hidden">
                   <img
                     src={getImageUrl(item)}
                     alt={item.productName}
                     className="w-full h-full object-cover"
+                    onError={(e) => {
+                      e.currentTarget.src = '/images/placeholder-product.jpg';
+                    }}
                   />
-
                 </div>
 
                 {/* THÔNG TIN SẢN PHẨM */}

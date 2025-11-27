@@ -1,74 +1,88 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useRouter, useParams } from 'next/navigation';
 import { orderService } from '@/services/orderService';
-import { useRouter } from 'next/navigation';
-import { Order, OrderStatus } from '@/types/order';
+import { 
+  Order, 
+  OrderStatus, 
+  UpdateOrderRequest 
+} from '@/types/order';
 
-export default function EditOrderPage({ params }: { params: { id: string } }) {
+export default function EditOrderPage() {
   const router = useRouter();
-  const orderId = Number(params.id);
+  const params = useParams();
   const [order, setOrder] = useState<Order | null>(null);
+  const [originalOrder, setOriginalOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
 
+  const orderId = params.id ? parseInt(params.id as string, 10) : null;
+
   useEffect(() => {
+    if (!orderId) {
+      router.push('/orders');
+      return;
+    }
+
     const loadOrder = async () => {
       try {
         setLoading(true);
         const data = await orderService.getOrderById(orderId);
-        console.log('📦 Order loaded:', data);
-        setOrder(data);
+        setOrder({ ...data, paidAt: data.paidAt || '' });
+        setOriginalOrder({ ...data, paidAt: data.paidAt || '' });
       } catch (error) {
-        console.error('❌ Error loading order:', error);
-        setError('Không thể tải thông tin đơn hàng!');
+        console.error('Lỗi tải đơn hàng:', error);
+        setError('Không thể tải thông tin đơn hàng');
+        router.push('/orders');
       } finally {
         setLoading(false);
       }
     };
     
     loadOrder();
-  }, [orderId]);
+  }, [orderId, router]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!order) return;
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
 
-    try {
-      setSubmitting(true);
-      setError('');
-      
-      console.log('📤 Updating order:', orderId, {
-        status: order.status,
-        shippingAddress: order.shippingAddress,
-        billingAddress: order.billingAddress,
-        isPaid: order.isPaid,
-      });
+  if (!order || !orderId || !originalOrder) return;
 
-      await orderService.updateOrder(orderId, {
-        status: order.status,
-        shippingAddress: order.shippingAddress,
-        billingAddress: order.billingAddress,
-        isPaid: order.isPaid,
-      });
-      
-      alert('✅ Cập nhật đơn hàng thành công!');
-      router.push('/orders');
-    } catch (error) {
-      console.error('❌ Error updating order:', error);
-      setError('Có lỗi xảy ra khi cập nhật đơn hàng!');
-    } finally {
-      setSubmitting(false);
-    }
-  };
+  try {
+    setSubmitting(true);
+    setError('');
 
-  const formatCurrency = (amount: number) => {
+    // Chỉ gửi các trường mà backend chấp nhận
+    const updateData: UpdateOrderRequest = {
+      ...(order.status !== originalOrder.status && { status: order.status }),
+      ...(order.shippingAddress !== originalOrder.shippingAddress && { shippingAddress: order.shippingAddress }),
+      ...(order.billingAddress !== originalOrder.billingAddress && { billingAddress: order.billingAddress }),
+      ...(order.isPaid !== originalOrder.isPaid && { isPaid: !!order.isPaid }), // ép boolean
+      ...(order.paidAt && order.paidAt !== originalOrder.paidAt && { paidAt: new Date(order.paidAt).toISOString() }),
+    };
+
+    // Log payload để debug nếu vẫn lỗi
+    console.log("Payload gửi lên backend:", updateData);
+
+    await orderService.updateOrder(orderId, updateData);
+
+    alert('Cập nhật đơn hàng thành công!');
+    router.push('/orders');
+  } catch (error: any) {
+    console.error('Lỗi cập nhật đơn hàng:', JSON.stringify(error.response?.data || error.message, null, 2));
+    setError('Có lỗi xảy ra khi cập nhật đơn hàng');
+  } finally {
+    setSubmitting(false);
+  }
+};
+
+  const formatCurrency = (amount: number | string) => {
+    const numAmount = typeof amount === 'string' ? parseFloat(amount) : amount;
     return new Intl.NumberFormat('vi-VN', {
       style: 'currency',
       currency: 'VND'
-    }).format(amount);
+    }).format(numAmount);
   };
 
   if (loading) {
@@ -89,7 +103,7 @@ export default function EditOrderPage({ params }: { params: { id: string } }) {
           <div className="text-6xl mb-4">❌</div>
           <h2 className="text-xl font-bold text-red-700 mb-2">Không tìm thấy đơn hàng!</h2>
           <p className="text-red-600 mb-4">
-            {error || `Đơn hàng với ID ${orderId} không tồn tại.`}
+            Đơn hàng với ID {orderId} không tồn tại.
           </p>
           <button
             onClick={() => router.push('/orders')}
@@ -114,9 +128,10 @@ export default function EditOrderPage({ params }: { params: { id: string } }) {
         <h1 className="text-3xl font-bold text-gray-800">
           Chỉnh sửa đơn hàng #{order.orderNumber}
         </h1>
-        <p className="text-gray-600 mt-2">
-          Khách hàng: {order.customerName} (ID: {order.customerId})
-        </p>
+       <p className="text-gray-600 mt-2">
+  Khách hàng: {order.customer?.name ?? order.customerName ?? '—'} (ID: {order.customer_id})
+</p>
+
       </div>
 
       {error && (
@@ -126,7 +141,6 @@ export default function EditOrderPage({ params }: { params: { id: string } }) {
       )}
       
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Thông tin đơn hàng */}
         <div className="bg-white p-6 rounded-lg shadow">
           <h2 className="text-xl font-semibold mb-4">Thông tin đơn hàng</h2>
           
@@ -135,18 +149,17 @@ export default function EditOrderPage({ params }: { params: { id: string } }) {
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Trạng thái đơn hàng *
               </label>
-              <select
-                value={order.status}
-                onChange={(e) => setOrder({...order, status: e.target.value as OrderStatus})}
-                className="w-full border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="pending">Pending - Chờ xác nhận</option>
-                <option value="confirmed">Confirmed - Đã xác nhận</option>
-                <option value="processing">Processing - Đang xử lý</option>
-                <option value="shipped">Shipped - Đã giao hàng</option>
-                <option value="delivered">Delivered - Đã giao</option>
-                <option value="cancelled">Cancelled - Đã hủy</option>
-              </select>
+<select
+  value={order.status}
+  onChange={(e) => setOrder({...order, status: e.target.value as OrderStatus})}
+  className="w-full border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+>
+  <option value="Pending">Pending - Chờ xác nhận</option>
+  <option value="Paid">Paid - Đã thanh toán</option>
+  <option value="Shipped">Shipped - Đã giao hàng</option>
+  <option value="Canceled">Canceled - Đã hủy</option>
+</select>
+
             </div>
 
             <div>
@@ -163,20 +176,33 @@ export default function EditOrderPage({ params }: { params: { id: string } }) {
           </div>
 
           <div className="mt-4 flex items-center">
-            <input
-              type="checkbox"
-              id="isPaid"
-              checked={order.isPaid}
-              onChange={(e) => setOrder({...order, isPaid: e.target.checked})}
-              className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
-            />
-            <label htmlFor="isPaid" className="ml-2 text-sm font-medium text-gray-700">
-              Đã thanh toán
+<input
+  type="checkbox"
+  id="isPaid"
+  checked={order.isPaid}
+  onChange={(e) => setOrder({...order, isPaid: e.target.checked})}
+  className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+/>
+<label htmlFor="isPaid" className="ml-2 text-sm font-medium text-gray-700">
+  Đã thanh toán
+</label>
+
+          </div>
+
+          <div className="mt-4">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Ngày thanh toán
             </label>
+          <input
+  type="datetime-local"
+  value={order.paidAt ? order.paidAt.substring(0, 16) : ''}
+  onChange={(e) => setOrder({ ...order, paidAt: e.target.value })}
+  className="w-full border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+/>
+
           </div>
         </div>
 
-        {/* Địa chỉ */}
         <div className="bg-white p-6 rounded-lg shadow">
           <h2 className="text-xl font-semibold mb-4">Địa chỉ</h2>
           
@@ -209,7 +235,6 @@ export default function EditOrderPage({ params }: { params: { id: string } }) {
           </div>
         </div>
 
-        {/* Chi tiết sản phẩm (Read-only) */}
         <div className="bg-white p-6 rounded-lg shadow">
           <h2 className="text-xl font-semibold mb-4">Sản phẩm trong đơn hàng</h2>
           
@@ -232,15 +257,16 @@ export default function EditOrderPage({ params }: { params: { id: string } }) {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {order.items.map((item) => (
+{order.items?.map((item) => (
                   <tr key={item.id}>
-                    <td className="px-4 py-3">
-                      <div className="font-medium">{item.productName}</div>
-                      <div className="text-sm text-gray-500">ID: {item.productId}</div>
-                    </td>
-                    <td className="px-4 py-3">{item.quantity}</td>
-                    <td className="px-4 py-3">{formatCurrency(item.unitPrice)}</td>
-                    <td className="px-4 py-3 font-medium">{formatCurrency(item.totalPrice)}</td>
+                   <td className="px-4 py-3">
+  <div className="font-medium">{item.product_name}</div>
+  <div className="text-sm text-gray-500">ID: {item.product_id}</div>
+</td>
+<td className="px-4 py-3">{item.quantity}</td>
+<td className="px-4 py-3">{formatCurrency(item.price)}</td>
+<td className="px-4 py-3 font-medium">{formatCurrency(item.total)}</td>
+
                   </tr>
                 ))}
               </tbody>
@@ -249,14 +275,14 @@ export default function EditOrderPage({ params }: { params: { id: string } }) {
 
           <div className="mt-4 flex justify-end">
             <div className="text-right">
-              <p className="text-lg font-semibold">
-                Tổng cộng: {formatCurrency(order.totalAmount)}
-              </p>
+<p className="text-lg font-semibold">
+  Tổng cộng: {formatCurrency(order.items?.reduce((sum, item) => sum + (item.total ?? 0), 0) ?? 0)}
+</p>
+
             </div>
           </div>
         </div>
 
-        {/* Actions */}
         <div className="flex justify-end gap-4 pt-6 border-t">
           <button
             type="button"
@@ -272,7 +298,7 @@ export default function EditOrderPage({ params }: { params: { id: string } }) {
             disabled={submitting}
             className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {submitting ? '⏳ Đang cập nhật...' : '✅ Cập nhật đơn hàng'}
+            {submitting ? 'Đang cập nhật...' : 'Cập nhật đơn hàng'}
           </button>
         </div>
       </form>

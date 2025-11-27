@@ -9,6 +9,7 @@ export default function StoreHeader() {
   const { state } = useCart();
   const [categories, setCategories] = useState<string[]>([]);
   const [showCategories, setShowCategories] = useState(false);
+  const [hideTimeout, setHideTimeout] = useState<NodeJS.Timeout | null>(null);
 
   const itemCount = state.items.reduce((total, item) => total + item.quantity, 0);
 
@@ -36,12 +37,22 @@ export default function StoreHeader() {
         <nav className="hidden md:flex items-center space-x-8">
           <NavLink href="/store">Trang chủ</NavLink>
 
+          {/* ✅ Dropdown Danh mục */}
           <div
             className="relative"
-            onMouseEnter={() => setShowCategories(true)}
-            onMouseLeave={() => setShowCategories(false)}
+            onMouseEnter={() => {
+              if (hideTimeout) clearTimeout(hideTimeout);
+              setShowCategories(true);
+            }}
+            onMouseLeave={() => {
+              const timeout = setTimeout(() => setShowCategories(false), 300);
+              setHideTimeout(timeout);
+            }}
           >
-            <button className="font-medium text-gray-700 hover:text-blue-600 transition flex items-center">
+            <button
+              className="font-medium text-gray-700 hover:text-blue-600 transition flex items-center"
+              onClick={(e) => e.preventDefault()} // Ngăn nhảy trang khi click
+            >
               Danh mục
               <svg className="ml-1 w-4 h-4" fill="none" stroke="currentColor">
                 <path d="M19 9l-7 7-7-7" strokeWidth="2" />
@@ -49,7 +60,7 @@ export default function StoreHeader() {
             </button>
 
             {showCategories && (
-              <div className="absolute top-full left-0 mt-3 w-56 bg-white shadow-xl rounded-xl p-3 border">
+              <div className="absolute top-full left-0 mt-3 w-56 bg-white shadow-xl rounded-xl p-3 border z-50 transition-all duration-300">
                 {categories.map((c, i) => (
                   <Link
                     key={i}

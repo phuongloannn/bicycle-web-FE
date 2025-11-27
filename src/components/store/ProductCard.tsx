@@ -1,4 +1,3 @@
-// src/components/store/ProductCard.tsx - SỬA HOÀN TOÀN
 'use client';
 import Link from 'next/link';
 import { Product } from '../../types/store';
@@ -9,7 +8,7 @@ interface ProductCardProps {
 }
 
 export default function ProductCard({ product }: ProductCardProps) {
-  const { dispatch } = useCart();
+  const { addToCart } = useCart();
 
   // DEBUG: Kiểm tra tất cả field ảnh
   console.log('🖼️ Product image fields for ID', product.id, ':', {
@@ -35,12 +34,15 @@ export default function ProductCard({ product }: ProductCardProps) {
   const imageUrl = getImageUrl();
   console.log('✅ Final image URL for product', product.id, ':', imageUrl);
 
-  const addToCart = () => {
-    dispatch({
-      type: 'ADD_ITEM',
-      payload: { product, quantity: 1 }
-    });
-    alert('Đã thêm vào giỏ hàng!');
+  const handleAddToCart = () => {
+    addToCart(product, 1)
+      .then(() => {
+        alert('Đã thêm vào giỏ hàng!');
+      })
+      .catch((error) => {
+        console.error('Lỗi thêm sản phẩm vào giỏ hàng:', error);
+        alert('Không thể thêm sản phẩm vào giỏ hàng');
+      });
   };
 
   const isInStock = (product.stock > 0 || product.quantity > 0);
@@ -58,18 +60,21 @@ export default function ProductCard({ product }: ProductCardProps) {
               onError={(e) => {
                 console.error('❌ IMAGE LOAD ERROR for product', product.id, 'URL:', imageUrl);
                 e.currentTarget.style.display = 'none';
+                e.currentTarget.parentElement?.querySelector('.fallback')?.classList.remove('hidden');
               }}
             />
           ) : null}
-          
-          {/* Placeholder - hiển thị khi không có ảnh hoặc ảnh lỗi */}
-          <div className={`w-full h-full flex items-center justify-center text-gray-500 ${imageUrl ? '' : ''}`}>
-            <div className="text-center">
-              <div className="text-4xl mb-2">📷</div>
-              <div className="text-sm">No Image</div>
-              <div className="text-xs text-gray-400 mt-1">ID: {product.id}</div>
+
+          {/* Placeholder - chỉ hiển thị khi không có ảnh hoặc ảnh lỗi */}
+          {!imageUrl && (
+            <div className="w-full h-full flex items-center justify-center text-gray-500 fallback">
+              <div className="text-center">
+                <div className="text-4xl mb-2">📷</div>
+                <div className="text-sm">No Image</div>
+                <div className="text-xs text-gray-400 mt-1">ID: {product.id}</div>
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </Link>
       
@@ -96,7 +101,7 @@ export default function ProductCard({ product }: ProductCardProps) {
         </div>
         
         <button
-          onClick={addToCart}
+          onClick={handleAddToCart}
           disabled={!isInStock}
           className={`w-full py-2 px-4 rounded-lg font-semibold transition duration-300 ${
             isInStock 

@@ -36,34 +36,31 @@ export default function ProductsPage() {
     loadProducts();
   }, []);
 
-  // Filter products
-  useEffect(() => {
-    let filtered = products;
+ // Filter products
+useEffect(() => {
+  let filtered = products;
 
-    if (searchTerm) {
-      filtered = filtered.filter(product =>
-        product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        product.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        product.category.toLowerCase().includes(searchTerm.toLowerCase())
+  if (searchTerm) {
+    filtered = filtered.filter(product => {
+      const searchLower = searchTerm.toLowerCase();
+      const productName = product.name || '';
+      const productDescription = product.description || '';
+      const productCategory = product.category || '';
+      
+      return (
+        productName.toLowerCase().includes(searchLower) ||
+        productDescription.toLowerCase().includes(searchLower) ||
+        productCategory.toLowerCase().includes(searchLower)
       );
-    }
-
-    if (selectedCategory) {
-      filtered = filtered.filter(product => product.category === selectedCategory);
-    }
-
-    setFilteredProducts(filtered);
-  }, [searchTerm, selectedCategory, products]);
-
-  if (loading) {
-    return (
-      <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-center items-center min-h-64">
-          <div className="text-lg">Đang tải sản phẩm...</div>
-        </div>
-      </div>
-    );
+    });
   }
+
+  if (selectedCategory) {
+    filtered = filtered.filter(product => product.category === selectedCategory);
+  }
+
+  setFilteredProducts(filtered);
+}, [searchTerm, selectedCategory, products]);
 
   return (
     <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">

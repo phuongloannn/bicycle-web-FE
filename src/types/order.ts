@@ -1,50 +1,63 @@
 export enum OrderStatus {
-  PENDING = 'pending',
-  CONFIRMED = 'confirmed',
-  PROCESSING = 'processing',
-  SHIPPED = 'shipped',
-  DELIVERED = 'delivered',
-  CANCELLED = 'cancelled'
+  Pending = 'Pending',
+  Paid = 'Paid',
+  Shipped = 'Shipped',
+  Canceled = 'Canceled',
 }
 
+// Sản phẩm trong đơn hàng
 export interface OrderItem {
   id: number;
-  productId: number;
-  productName: string;
+  product_id: number;
+  product_name: string;
   quantity: number;
-  unitPrice: number;
-  totalPrice: number;
+  price: number;
+  total: number;
 }
 
+// Khách hàng
+export interface Customer {
+  id: number;
+  name: string;
+  email?: string;
+  phone?: string;
+  address?: string;
+}
+
+// Đơn hàng
 export interface Order {
   id: number;
   orderNumber: string;
-  customerId: number;
-  customerName: string;
-  totalAmount: number;
+  customer_id: number;
+  customer?: Customer;
+  customerName?: string; // nếu bạn vẫn dùng order.customerName
   status: OrderStatus;
-  shippingAddress: string;
-  billingAddress: string;
-  paymentMethod: string;
-  isPaid: boolean;
-  paidAt: string | null;
-  items: OrderItem[];
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface CreateOrderRequest {
-  customerId: number;
-  items: {
-    productId: number;
-    quantity: number;
-    unitPrice: number;
-  }[];
   shippingAddress?: string;
   billingAddress?: string;
+  isPaid?: boolean;
+  paidAt?: string;
   paymentMethod?: string;
+  items?: OrderItem[];
+  totalAmount?: number;
 }
 
+// Request tạo đơn hàng
+export interface CreateOrderRequest {
+  customer_id: number;
+  status: OrderStatus;
+  shippingAddress?: string;
+  billingAddress?: string;
+  isPaid?: boolean;
+  paidAt?: string;
+  orderNumber?: string;
+  items?: {
+    product_id: number;
+    quantity: number;
+    price: number;
+  }[];
+}
+
+// Request cập nhật đơn hàng
 export interface UpdateOrderRequest {
   status?: OrderStatus;
   shippingAddress?: string;
