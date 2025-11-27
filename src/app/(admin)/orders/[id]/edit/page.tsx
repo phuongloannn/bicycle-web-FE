@@ -18,46 +18,31 @@ export default function EditOrderPage({ params }: { params: { id: string } }) {
       try {
         setLoading(true);
         const data = await orderService.getOrderById(orderId);
-        console.log('📦 Order loaded:', data);
         setOrder(data);
       } catch (error) {
-        console.error('❌ Error loading order:', error);
         setError('Không thể tải thông tin đơn hàng!');
       } finally {
         setLoading(false);
       }
     };
-    
     loadOrder();
   }, [orderId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
     if (!order) return;
-
     try {
       setSubmitting(true);
       setError('');
-      
-      console.log('📤 Updating order:', orderId, {
-        status: order.status,
-        shippingAddress: order.shippingAddress,
-        billingAddress: order.billingAddress,
-        isPaid: order.isPaid,
-      });
-
       await orderService.updateOrder(orderId, {
         status: order.status,
         shippingAddress: order.shippingAddress,
         billingAddress: order.billingAddress,
         isPaid: order.isPaid,
       });
-      
       alert('✅ Cập nhật đơn hàng thành công!');
       router.push('/orders');
     } catch (error) {
-      console.error('❌ Error updating order:', error);
       setError('Có lỗi xảy ra khi cập nhật đơn hàng!');
     } finally {
       setSubmitting(false);
@@ -73,10 +58,10 @@ export default function EditOrderPage({ params }: { params: { id: string } }) {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-screen">
+      <div className="flex justify-center items-center h-screen bg-[#F2D8EE]">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-500 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Đang tải thông tin đơn hàng...</p>
+          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-[#8B278C] mx-auto"></div>
+          <p className="mt-4 text-[#8B278C] font-semibold">Đang tải thông tin đơn hàng...</p>
         </div>
       </div>
     );
@@ -84,16 +69,14 @@ export default function EditOrderPage({ params }: { params: { id: string } }) {
 
   if (!order) {
     return (
-      <div className="p-6">
-        <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
+      <div className="p-6 bg-[#F2D8EE] min-h-screen flex items-center justify-center">
+        <div className="bg-[#D4ADD9] border border-[#B673BF] rounded-lg p-6 text-center">
           <div className="text-6xl mb-4">❌</div>
-          <h2 className="text-xl font-bold text-red-700 mb-2">Không tìm thấy đơn hàng!</h2>
-          <p className="text-red-600 mb-4">
-            {error || `Đơn hàng với ID ${orderId} không tồn tại.`}
-          </p>
+          <h2 className="text-xl font-bold text-[#8B278C] mb-2">Không tìm thấy đơn hàng!</h2>
+          <p className="text-[#8B278C] mb-4">{error || `Đơn hàng với ID ${orderId} không tồn tại.`}</p>
           <button
             onClick={() => router.push('/orders')}
-            className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+            className="px-6 py-2 bg-gradient-to-r from-[#8B278C] via-[#B673BF] to-[#D2A0D9] text-white rounded-lg hover:opacity-90 transition duration-200"
           >
             Quay lại danh sách đơn hàng
           </button>
@@ -103,42 +86,42 @@ export default function EditOrderPage({ params }: { params: { id: string } }) {
   }
 
   return (
-    <div className="p-6 max-w-5xl mx-auto">
+    <div className="p-6 max-w-5xl mx-auto bg-[#F2D8EE] min-h-screen">
       <div className="mb-6">
         <button
           onClick={() => router.push('/orders')}
-          className="flex items-center text-blue-600 hover:text-blue-800 mb-4"
+          className="flex items-center text-[#8B278C] hover:text-[#B673BF] mb-4 font-semibold"
         >
           ← Quay lại danh sách
         </button>
-        <h1 className="text-3xl font-bold text-gray-800">
+        <h1 className="text-3xl font-bold text-[#8B278C]">
           Chỉnh sửa đơn hàng #{order.orderNumber}
         </h1>
-        <p className="text-gray-600 mt-2">
+        <p className="text-[#B673BF] mt-2">
           Khách hàng: {order.customerName} (ID: {order.customerId})
         </p>
       </div>
 
       {error && (
-        <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+        <div className="mb-6 bg-[#D4ADD9] border border-[#B673BF] text-[#8B278C] px-4 py-3 rounded-lg">
           {error}
         </div>
       )}
       
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Thông tin đơn hàng */}
-        <div className="bg-white p-6 rounded-lg shadow">
-          <h2 className="text-xl font-semibold mb-4">Thông tin đơn hàng</h2>
+        <div className="bg-[#D2A0D9] p-6 rounded-lg shadow">
+          <h2 className="text-xl font-semibold mb-4 text-[#8B278C]">Thông tin đơn hàng</h2>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-[#8B278C] mb-2">
                 Trạng thái đơn hàng *
               </label>
               <select
                 value={order.status}
                 onChange={(e) => setOrder({...order, status: e.target.value as OrderStatus})}
-                className="w-full border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full border border-[#B673BF] p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#8B278C] bg-[#F2D8EE] text-[#8B278C]"
               >
                 <option value="pending">Pending - Chờ xác nhận</option>
                 <option value="confirmed">Confirmed - Đã xác nhận</option>
@@ -150,14 +133,14 @@ export default function EditOrderPage({ params }: { params: { id: string } }) {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-[#8B278C] mb-2">
                 Phương thức thanh toán
               </label>
               <input
                 type="text"
                 value={order.paymentMethod}
                 readOnly
-                className="w-full border border-gray-300 p-3 rounded-lg bg-gray-50"
+                className="w-full border border-[#B673BF] p-3 rounded-lg bg-[#F2D8EE] text-[#8B278C]"
               />
             </div>
           </div>
@@ -168,40 +151,40 @@ export default function EditOrderPage({ params }: { params: { id: string } }) {
               id="isPaid"
               checked={order.isPaid}
               onChange={(e) => setOrder({...order, isPaid: e.target.checked})}
-              className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+              className="w-4 h-4 text-[#8B278C] rounded focus:ring-[#8B278C]"
             />
-            <label htmlFor="isPaid" className="ml-2 text-sm font-medium text-gray-700">
+            <label htmlFor="isPaid" className="ml-2 text-sm font-medium text-[#8B278C]">
               Đã thanh toán
             </label>
           </div>
         </div>
 
         {/* Địa chỉ */}
-        <div className="bg-white p-6 rounded-lg shadow">
-          <h2 className="text-xl font-semibold mb-4">Địa chỉ</h2>
+        <div className="bg-[#D2A0D9] p-6 rounded-lg shadow">
+          <h2 className="text-xl font-semibold mb-4 text-[#8B278C]">Địa chỉ</h2>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-[#8B278C] mb-2">
                 Địa chỉ giao hàng
               </label>
               <textarea
                 value={order.shippingAddress}
                 onChange={(e) => setOrder({...order, shippingAddress: e.target.value})}
-                className="w-full border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full border border-[#B673BF] p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#8B278C] bg-[#F2D8EE] text-[#8B278C]"
                 rows={4}
                 placeholder="Nhập địa chỉ giao hàng..."
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-[#8B278C] mb-2">
                 Địa chỉ thanh toán
               </label>
               <textarea
                 value={order.billingAddress}
                 onChange={(e) => setOrder({...order, billingAddress: e.target.value})}
-                className="w-full border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full border border-[#B673BF] p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#8B278C] bg-[#F2D8EE] text-[#8B278C]"
                 rows={4}
                 placeholder="Nhập địa chỉ thanh toán..."
               />
@@ -209,60 +192,13 @@ export default function EditOrderPage({ params }: { params: { id: string } }) {
           </div>
         </div>
 
-        {/* Chi tiết sản phẩm (Read-only) */}
-        <div className="bg-white p-6 rounded-lg shadow">
-          <h2 className="text-xl font-semibold mb-4">Sản phẩm trong đơn hàng</h2>
-          
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                    Sản phẩm
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                    Số lượng
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                    Đơn giá
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                    Thành tiền
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200">
-                {order.items.map((item) => (
-                  <tr key={item.id}>
-                    <td className="px-4 py-3">
-                      <div className="font-medium">{item.productName}</div>
-                      <div className="text-sm text-gray-500">ID: {item.productId}</div>
-                    </td>
-                    <td className="px-4 py-3">{item.quantity}</td>
-                    <td className="px-4 py-3">{formatCurrency(item.unitPrice)}</td>
-                    <td className="px-4 py-3 font-medium">{formatCurrency(item.totalPrice)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          <div className="mt-4 flex justify-end">
-            <div className="text-right">
-              <p className="text-lg font-semibold">
-                Tổng cộng: {formatCurrency(order.totalAmount)}
-              </p>
-            </div>
-          </div>
-        </div>
-
         {/* Actions */}
-        <div className="flex justify-end gap-4 pt-6 border-t">
+        <div className="flex justify-end gap-4 pt-6 border-t border-[#B673BF]">
           <button
             type="button"
             onClick={() => router.push('/orders')}
             disabled={submitting}
-            className="px-6 py-3 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 disabled:opacity-50"
+            className="px-6 py-3 bg-[#D4ADD9] text-[#8B278C] rounded-lg hover:opacity-90 disabled:opacity-50"
           >
             Hủy
           </button>
@@ -270,7 +206,7 @@ export default function EditOrderPage({ params }: { params: { id: string } }) {
           <button
             type="submit"
             disabled={submitting}
-            className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-6 py-3 bg-gradient-to-r from-[#8B278C] via-[#B673BF] to-[#D2A0D9] text-white rounded-lg hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {submitting ? '⏳ Đang cập nhật...' : '✅ Cập nhật đơn hàng'}
           </button>

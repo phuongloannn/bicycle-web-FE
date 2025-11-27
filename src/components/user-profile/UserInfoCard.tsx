@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useModal } from "../../hooks/useModal";
 import { Modal } from "../ui/modal";
 import Button from "../ui/button/Button";
@@ -8,24 +8,51 @@ import Label from "../form/Label";
 
 export default function UserInfoCard() {
   const { isOpen, openModal, closeModal } = useModal();
-  
-  // State cho thông tin user của bạn - HÃY THAY THẾ BẰNG THÔNG TIN THẬT CỦA BẠN
+
+  // Thông tin user mẫu đầy đủ
   const [userInfo, setUserInfo] = useState({
+    // Personal Information
     firstName: "Loan",
     lastName: "Phương",
     email: "loaniuoi@gmail.com",
     phone: "+84 123 456 789",
     bio: "ngoan xinh iu",
+    
+    // Address Information
+    country: "Việt Nam",
+    cityState: "Hà Nội, Việt Nam",
+    postalCode: "100000",
+    taxId: "MST123456789",
+    address: "123 Đường ABC, Quận XYZ",
+    
+    // Social Links
     facebook: "https://www.facebook.com/username_cua_ban",
     twitter: "https://x.com/username_cua_ban",
     linkedin: "https://www.linkedin.com/in/username_cua_ban",
-    instagram: "https://instagram.com/username_cua_ban"
+    instagram: "https://instagram.com/username_cua_ban",
+    
+    // Additional Info
+    dateOfBirth: "1995-05-15",
+    gender: "Female",
+    occupation: "Designer"
   });
 
-  // State cho form editing
   const [formData, setFormData] = useState(userInfo);
 
-  // Cập nhật form data khi input thay đổi
+  // Load data từ localStorage khi component mount
+  useEffect(() => {
+    const savedUserInfo = localStorage.getItem("userProfile");
+    if (savedUserInfo) {
+      try {
+        const parsedInfo = JSON.parse(savedUserInfo);
+        setUserInfo(prev => ({ ...prev, ...parsedInfo }));
+        setFormData(prev => ({ ...prev, ...parsedInfo }));
+      } catch (error) {
+        console.error("Error parsing saved user info:", error);
+      }
+    }
+  }, []);
+
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({
       ...prev,
@@ -34,232 +61,233 @@ export default function UserInfoCard() {
   };
 
   const handleSave = () => {
-    // Cập nhật thông tin user
     setUserInfo(formData);
     
-    // TODO: Gọi API để lưu vào backend
+    // Save to localStorage
+    localStorage.setItem("userProfile", JSON.stringify(formData));
+    
     console.log("Saving user info:", formData);
-    
-    // Đóng modal
     closeModal();
-    
-    // Có thể thêm toast notification ở đây
-    // toast.success("Profile updated successfully!");
   };
 
-  // Reset form khi mở modal
   const handleOpenModal = () => {
     setFormData(userInfo);
     openModal();
   };
 
-  // Hủy và đóng modal
   const handleCancel = () => {
-    setFormData(userInfo); // Reset về giá trị ban đầu
+    setFormData(userInfo);
     closeModal();
   };
 
+  // Format label từ key (camelCase to Title Case)
+  const formatLabel = (key: string) => {
+    return key
+      .replace(/([A-Z])/g, ' $1')
+      .replace(/^./, str => str.toUpperCase())
+      .replace('City State', 'City/State')
+      .replace('Tax Id', 'Tax ID')
+      .replace('Date Of Birth', 'Date of Birth');
+  };
+
   return (
-    <div className="p-5 border border-gray-200 rounded-2xl dark:border-gray-800 lg:p-6">
-      <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
-        <div>
-          <h4 className="text-lg font-semibold text-gray-800 dark:text-white/90 lg:mb-6">
-            Personal Information
-          </h4>
+    <>
+      {/* Card hiển thị thông tin */}
+      <div className="p-6 border border-[#D2A0D9] rounded-2xl bg-gradient-to-r from-[#F2D8EE] to-[#D4ADD9] shadow-lg">
+        <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+          <div className="flex-1">
+            <h4 className="text-xl font-bold text-[#8B278C] lg:mb-6">
+              Personal Information
+            </h4>
 
-          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-7 2xl:gap-x-32">
-            <div>
-              <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
-                First Name
-              </p>
-              <p className="text-sm font-medium text-gray-800 dark:text-white/90">
-                {userInfo.firstName}
-              </p>
+            {/* Personal Info Grid */}
+            <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-6">
+              <div>
+                <p className="text-xs text-[#8B278C]/70 mb-1">First Name</p>
+                <p className="text-sm font-semibold text-[#8B278C]">{userInfo.firstName}</p>
+              </div>
+              <div>
+                <p className="text-xs text-[#8B278C]/70 mb-1">Last Name</p>
+                <p className="text-sm font-semibold text-[#8B278C]">{userInfo.lastName}</p>
+              </div>
+              <div>
+                <p className="text-xs text-[#8B278C]/70 mb-1">Email</p>
+                <p className="text-sm font-semibold text-[#8B278C]">{userInfo.email}</p>
+              </div>
+              <div>
+                <p className="text-xs text-[#8B278C]/70 mb-1">Phone</p>
+                <p className="text-sm font-semibold text-[#8B278C]">{userInfo.phone}</p>
+              </div>
+              <div className="col-span-2">
+                <p className="text-xs text-[#8B278C]/70 mb-1">Bio</p>
+                <p className="text-sm font-semibold text-[#8B278C]">{userInfo.bio}</p>
+              </div>
             </div>
 
-            <div>
-              <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
-                Last Name
-              </p>
-              <p className="text-sm font-medium text-gray-800 dark:text-white/90">
-                {userInfo.lastName}
-              </p>
+            {/* Address Info Section */}
+            <div className="mt-6 pt-6 border-t border-[#D2A0D9]">
+              <h5 className="text-lg font-semibold text-[#8B278C] mb-4">Address Information</h5>
+              <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-6">
+                <div>
+                  <p className="text-xs text-[#8B278C]/70 mb-1">Country</p>
+                  <p className="text-sm font-semibold text-[#8B278C]">{userInfo.country}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-[#8B278C]/70 mb-1">City/State</p>
+                  <p className="text-sm font-semibold text-[#8B278C]">{userInfo.cityState}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-[#8B278C]/70 mb-1">Postal Code</p>
+                  <p className="text-sm font-semibold text-[#8B278C]">{userInfo.postalCode}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-[#8B278C]/70 mb-1">Tax ID</p>
+                  <p className="text-sm font-semibold text-[#8B278C]">{userInfo.taxId}</p>
+                </div>
+                <div className="col-span-2">
+                  <p className="text-xs text-[#8B278C]/70 mb-1">Address</p>
+                  <p className="text-sm font-semibold text-[#8B278C]">{userInfo.address}</p>
+                </div>
+              </div>
             </div>
 
-            <div>
-              <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
-                Email address
-              </p>
-              <p className="text-sm font-medium text-gray-800 dark:text-white/90">
-                {userInfo.email}
-              </p>
-            </div>
-
-            <div>
-              <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
-                Phone
-              </p>
-              <p className="text-sm font-medium text-gray-800 dark:text-white/90">
-                {userInfo.phone}
-              </p>
-            </div>
-
-            <div>
-              <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
-                Bio
-              </p>
-              <p className="text-sm font-medium text-gray-800 dark:text-white/90">
-                {userInfo.bio}
-              </p>
+            {/* Social Links Section */}
+            <div className="mt-6 pt-6 border-t border-[#D2A0D9]">
+              <h5 className="text-lg font-semibold text-[#8B278C] mb-4">Social Links</h5>
+              <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-6">
+                <div>
+                  <p className="text-xs text-[#8B278C]/70 mb-1">Facebook</p>
+                  <p className="text-sm font-semibold text-[#8B278C] truncate">{userInfo.facebook}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-[#8B278C]/70 mb-1">Twitter</p>
+                  <p className="text-sm font-semibold text-[#8B278C] truncate">{userInfo.twitter}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-[#8B278C]/70 mb-1">LinkedIn</p>
+                  <p className="text-sm font-semibold text-[#8B278C] truncate">{userInfo.linkedin}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-[#8B278C]/70 mb-1">Instagram</p>
+                  <p className="text-sm font-semibold text-[#8B278C] truncate">{userInfo.instagram}</p>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
 
-        <button
-          onClick={handleOpenModal}
-          className="flex w-full items-center justify-center gap-2 rounded-full border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-700 shadow-theme-xs hover:bg-gray-50 hover:text-gray-800 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-white/[0.03] dark:hover:text-gray-200 lg:inline-flex lg:w-auto"
-        >
-          <svg
-            className="fill-current"
-            width="18"
-            height="18"
-            viewBox="0 0 18 18"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
+          <button
+            onClick={handleOpenModal}
+            className="flex w-full lg:w-auto items-center justify-center gap-2 rounded-full border border-[#B673BF] bg-[#8B278C] px-6 py-3 text-sm font-semibold text-white hover:bg-[#B673BF] transition-all duration-200 shadow-md hover:shadow-lg"
           >
-            <path
-              fillRule="evenodd"
-              clipRule="evenodd"
-              d="M15.0911 2.78206C14.2125 1.90338 12.7878 1.90338 11.9092 2.78206L4.57524 10.116C4.26682 10.4244 4.0547 10.8158 3.96468 11.2426L3.31231 14.3352C3.25997 14.5833 3.33653 14.841 3.51583 15.0203C3.69512 15.1996 3.95286 15.2761 4.20096 15.2238L7.29355 14.5714C7.72031 14.4814 8.11172 14.2693 8.42013 13.9609L15.7541 6.62695C16.6327 5.74827 16.6327 4.32365 15.7541 3.44497L15.0911 2.78206ZM12.9698 3.84272C13.2627 3.54982 13.7376 3.54982 14.0305 3.84272L14.6934 4.50563C14.9863 4.79852 14.9863 5.2734 14.6934 5.56629L14.044 6.21573L12.3204 4.49215L12.9698 3.84272ZM11.2597 5.55281L5.6359 11.1766C5.53309 11.2794 5.46238 11.4099 5.43238 11.5522L5.01758 13.5185L6.98394 13.1037C7.1262 13.0737 7.25666 13.003 7.35947 12.9002L12.9833 7.27639L11.2597 5.55281Z"
-              fill=""
-            />
-          </svg>
-          Edit
-        </button>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M11 4H4C3.46957 4 2.96086 4.21071 2.58579 4.58579C2.21071 4.96086 2 5.46957 2 6V20C2 20.5304 2.21071 21.0391 2.58579 21.4142C2.96086 21.7893 3.46957 22 4 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M18.5 2.5C18.8978 2.10217 19.4374 1.87868 20 1.87868C20.5626 1.87868 21.1022 2.10217 21.5 2.5C21.8978 2.89782 22.1213 3.43739 22.1213 4C22.1213 4.56261 21.8978 5.10217 21.5 5.5L12 15L8 16L9 12L18.5 2.5Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+            Edit Profile
+          </button>
+        </div>
       </div>
 
-      <Modal isOpen={isOpen} onClose={handleCancel} className="max-w-[700px] m-4">
-        <div className="no-scrollbar relative w-full max-w-[700px] overflow-y-auto rounded-3xl bg-white p-4 dark:bg-gray-900 lg:p-11">
-          <div className="px-2 pr-14">
-            <h4 className="mb-2 text-2xl font-semibold text-gray-800 dark:text-white/90">
-              Edit Personal Information
-            </h4>
-            <p className="mb-6 text-sm text-gray-500 dark:text-gray-400 lg:mb-7">
-              Update your details to keep your profile up-to-date.
-            </p>
-          </div>
-          
-          <form className="flex flex-col" onSubmit={(e) => e.preventDefault()}>
-            <div className="custom-scrollbar h-[450px] overflow-y-auto px-2 pb-3">
-              <div>
-                <h5 className="mb-5 text-lg font-medium text-gray-800 dark:text-white/90 lg:mb-6">
-                  Social Links
-                </h5>
+      {/* Modal chỉnh sửa */}
+      <Modal isOpen={isOpen} onClose={handleCancel} className="max-w-[800px] m-4">
+        <div className="relative w-full p-6 overflow-y-auto bg-white rounded-3xl shadow-xl max-h-[90vh]">
+          <h4 className="mb-2 text-2xl font-bold text-[#8B278C]">
+            Edit Personal Information
+          </h4>
+          <p className="mb-6 text-sm text-[#8B278C]/70">
+            Update your personal details, address information, and social links.
+          </p>
 
-                <div className="grid grid-cols-1 gap-x-6 gap-y-5 lg:grid-cols-2">
-                  <div>
-                    <Label>Facebook</Label>
+          <form className="flex flex-col gap-6" onSubmit={(e) => e.preventDefault()}>
+            {/* Personal Information */}
+            <div>
+              <h5 className="mb-4 text-lg font-semibold text-[#8B278C] border-b border-[#F2D8EE] pb-2">
+                Personal Information
+              </h5>
+              <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                {['firstName', 'lastName', 'email', 'phone', 'dateOfBirth', 'gender', 'occupation'].map((field) => (
+                  <div key={field} className={field === 'bio' ? 'col-span-2' : ''}>
+                    <Label>{formatLabel(field)}</Label>
                     <Input
-                      type="text"
-                      value={formData.facebook}
-                      onChange={(e) => handleInputChange("facebook", e.target.value)}
+                      type={field === 'dateOfBirth' ? 'date' : field === 'email' ? 'email' : 'text'}
+                      value={formData[field as keyof typeof formData]}
+                      onChange={(e) => handleInputChange(field, e.target.value)}
                     />
                   </div>
-
-                  <div>
-                    <Label>X.com</Label>
-                    <Input 
-                      type="text" 
-                      value={formData.twitter}
-                      onChange={(e) => handleInputChange("twitter", e.target.value)}
-                    />
-                  </div>
-
-                  <div>
-                    <Label>Linkedin</Label>
-                    <Input
-                      type="text"
-                      value={formData.linkedin}
-                      onChange={(e) => handleInputChange("linkedin", e.target.value)}
-                    />
-                  </div>
-
-                  <div>
-                    <Label>Instagram</Label>
-                    <Input
-                      type="text"
-                      value={formData.instagram}
-                      onChange={(e) => handleInputChange("instagram", e.target.value)}
-                    />
-                  </div>
-                </div>
-              </div>
-              
-              <div className="mt-7">
-                <h5 className="mb-5 text-lg font-medium text-gray-800 dark:text-white/90 lg:mb-6">
-                  Personal Information
-                </h5>
-
-                <div className="grid grid-cols-1 gap-x-6 gap-y-5 lg:grid-cols-2">
-                  <div className="col-span-2 lg:col-span-1">
-                    <Label>First Name</Label>
-                    <Input 
-                      type="text" 
-                      value={formData.firstName}
-                      onChange={(e) => handleInputChange("firstName", e.target.value)}
-                    />
-                  </div>
-
-                  <div className="col-span-2 lg:col-span-1">
-                    <Label>Last Name</Label>
-                    <Input 
-                      type="text" 
-                      value={formData.lastName}
-                      onChange={(e) => handleInputChange("lastName", e.target.value)}
-                    />
-                  </div>
-
-                  <div className="col-span-2 lg:col-span-1">
-                    <Label>Email Address</Label>
-                    <Input 
-                      type="email" 
-                      value={formData.email}
-                      onChange={(e) => handleInputChange("email", e.target.value)}
-                    />
-                  </div>
-
-                  <div className="col-span-2 lg:col-span-1">
-                    <Label>Phone</Label>
-                    <Input 
-                      type="tel" 
-                      value={formData.phone}
-                      onChange={(e) => handleInputChange("phone", e.target.value)}
-                    />
-                  </div>
-
-                  <div className="col-span-2">
-                    <Label>Bio</Label>
-                    <Input 
-                      type="text" 
-                      value={formData.bio}
-                      onChange={(e) => handleInputChange("bio", e.target.value)}
-                    />
-                  </div>
+                ))}
+                <div className="col-span-2">
+                  <Label>Bio</Label>
+                  <Input
+                    type="text"
+                    value={formData.bio}
+                    onChange={(e) => handleInputChange("bio", e.target.value)}
+                  />
                 </div>
               </div>
             </div>
-            
-            <div className="flex items-center gap-3 px-2 mt-6 lg:justify-end">
-              <Button size="sm" variant="outline" onClick={handleCancel} type="button">
+
+            {/* Address Information */}
+            <div>
+              <h5 className="mb-4 text-lg font-semibold text-[#8B278C] border-b border-[#F2D8EE] pb-2">
+                Address Information
+              </h5>
+              <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                {['country', 'cityState', 'postalCode', 'taxId', 'address'].map((field) => (
+                  <div key={field} className={field === 'address' ? 'col-span-2' : ''}>
+                    <Label>{formatLabel(field)}</Label>
+                    <Input
+                      type="text"
+                      value={formData[field as keyof typeof formData]}
+                      onChange={(e) => handleInputChange(field, e.target.value)}
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Social Links */}
+            <div>
+              <h5 className="mb-4 text-lg font-semibold text-[#8B278C] border-b border-[#F2D8EE] pb-2">
+                Social Links
+              </h5>
+              <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                {['facebook', 'twitter', 'linkedin', 'instagram'].map((field) => (
+                  <div key={field}>
+                    <Label>{formatLabel(field)}</Label>
+                    <Input
+                      type="url"
+                      value={formData[field as keyof typeof formData]}
+                      onChange={(e) => handleInputChange(field, e.target.value)}
+                      placeholder={`https://${field}.com/username`}
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Buttons */}
+            <div className="flex justify-end gap-3 pt-4 border-t border-[#F2D8EE]">
+              <Button 
+                size="sm" 
+                variant="outline" 
+                onClick={handleCancel} 
+                type="button"
+                className="border-[#B673BF] text-[#8B278C] hover:bg-[#F2D8EE]"
+              >
                 Cancel
               </Button>
-              <Button size="sm" onClick={handleSave} type="button">
+              <Button 
+                size="sm" 
+                onClick={handleSave} 
+                type="button"
+                className="bg-[#8B278C] text-white hover:bg-[#B673BF]"
+              >
                 Save Changes
               </Button>
             </div>
           </form>
         </div>
       </Modal>
-    </div>
+    </>
   );
 }

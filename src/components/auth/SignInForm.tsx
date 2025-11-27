@@ -72,15 +72,7 @@ export default function SignInForm() {
         <h1 className="mb-2 font-semibold text-gray-800 text-title-md">Sign In</h1>
         <p className="text-sm text-gray-500 mb-4">Enter your email and password to sign in!</p>
 
-        {/* NÚT TEST LOGIN */}
-        <div className="mb-4 p-4 bg-green-100 border border-green-400 rounded-lg">
-          <button
-            onClick={testDirect}
-            className="bg-green-500 text-white px-4 py-2 rounded font-bold"
-          >
-            🚀 Test Login Auto
-          </button>
-        </div>
+        
 
         <div className="space-y-6">
           <div>
