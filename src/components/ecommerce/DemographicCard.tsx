@@ -1,4 +1,5 @@
-"use client";
+'use client';
+
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { MoreDotIcon } from "@/icons";
@@ -25,7 +26,7 @@ function ProductItem({ product, apiBase, formatCurrency }: ProductItemProps) {
   return (
     <div className="flex items-center justify-between">
       <div className="flex items-center gap-3">
-        <div className="flex items-center justify-center w-12 h-12 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800">
+        <div className="flex items-center justify-center w-12 h-12 rounded-lg overflow-hidden bg-gray-100">
           {product.imageUrl && !imageError ? (
             <img
               src={`${apiBase}${product.imageUrl}`}
@@ -39,7 +40,7 @@ function ProductItem({ product, apiBase, formatCurrency }: ProductItemProps) {
               height="48"
               viewBox="0 0 48 48"
               fill="currentColor"
-              className="!text-gray-800 dark:!text-white"
+              className="text-gray-800"
               xmlns="http://www.w3.org/2000/svg"
             >
               <circle cx="12" cy="36" r="4" />
@@ -51,17 +52,17 @@ function ProductItem({ product, apiBase, formatCurrency }: ProductItemProps) {
           )}
         </div>
         <div>
-          <p className="text-theme-sm font-semibold !text-gray-800 dark:!text-white">
+          <p className="text-sm font-semibold text-gray-800">
             {product.name}
           </p>
         </div>
       </div>
 
       <div className="flex items-center gap-3">
-        <p className="text-theme-sm font-medium !text-gray-800 dark:!text-white">
+        <p className="text-sm font-medium text-gray-800">
           {product.sales} (s)
         </p>
-        <p className="text-theme-sm font-medium !text-gray-800 dark:!text-white">
+        <p className="text-sm font-medium text-gray-800">
           {formatCurrency(product.revenue)}
         </p>
       </div>
@@ -112,17 +113,17 @@ export default function DemographicCard() {
   };
 
   return (
-    <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] sm:p-6">
+    <div className="rounded-2xl border border-gray-200 bg-white p-5 sm:p-6">
       <div className="flex justify-between">
         <div>
-          <h3 className="text-lg font-semibold !text-gray-800 dark:!text-white">
+          <h3 className="text-lg font-semibold text-gray-800">
             Best Selling Products
           </h3>
         </div>
 
         <div className="relative inline-block">
           <button onClick={toggleDropdown} className="dropdown-toggle">
-            <MoreDotIcon className="text-gray-400 hover:text-gray-700 dark:hover:text-gray-300" />
+            <MoreDotIcon className="text-gray-400 hover:text-gray-700" />
           </button>
           <Dropdown
             isOpen={isOpen}
@@ -131,13 +132,13 @@ export default function DemographicCard() {
           >
             <DropdownItem
               onItemClick={closeDropdown}
-              className="flex w-full font-normal text-left text-gray-500 rounded-lg hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300"
+              className="flex w-full font-normal text-left text-gray-500 rounded-lg hover:bg-gray-100 hover:text-gray-700"
             >
               View More
             </DropdownItem>
             <DropdownItem
               onItemClick={closeDropdown}
-              className="flex w-full font-normal text-left text-gray-500 rounded-lg hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300"
+              className="flex w-full font-normal text-left text-gray-500 rounded-lg hover:bg-gray-100 hover:text-gray-700"
             >
               Delete
             </DropdownItem>
@@ -148,11 +149,11 @@ export default function DemographicCard() {
       <div className="mt-6 space-y-5">
         {loading ? (
           <div className="flex justify-center items-center py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-800 dark:border-white"></div>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-800"></div>
           </div>
         ) : products.length === 0 ? (
           <div className="text-center py-8">
-            <p className="!text-gray-800 dark:!text-gray-400">Không có sản phẩm nào</p>
+            <p className="text-gray-800">Không có sản phẩm nào</p>
           </div>
         ) : (
           products.map((product) => (

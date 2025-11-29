@@ -134,7 +134,6 @@ export default function StoreHeader() {
           </div>
 
           <NavLink href="/store/products">Tất cả sản phẩm</NavLink>
-          <NavLink href="/store/accessories">Phụ kiện</NavLink>
         </nav>
 
         {/* ✅ Cart */}

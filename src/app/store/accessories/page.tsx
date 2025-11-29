@@ -44,14 +44,12 @@ export default function AccessoriesStorePage() {
   const [searchQuery, setSearchQuery] = useState('');
   const { addToCart } = useCart();
 
-  // 🔥 FETCH ACCESSORIES TỪ DATABASE THẬT
+  // 🔥 FETCH ACCESSORIES
   useEffect(() => {
     async function loadAccessories() {
       try {
-        console.log('🔄 Loading accessories from API...');
         const data = await AccessoryService.getAccessories();
-        console.log('✅ Loaded accessories:', data);
-        
+        console.log('data', data);
         setAccessories(data);
         setFilteredAccessories(data);
       } catch (error) {
@@ -60,7 +58,6 @@ export default function AccessoriesStorePage() {
         setLoading(false);
       }
     }
-
     loadAccessories();
   }, []);
 
@@ -68,11 +65,12 @@ export default function AccessoriesStorePage() {
   useEffect(() => {
     let result = accessories;
 
-    // Filter by bike type
     if (selectedBikeType !== 'all') {
       result = result.filter(accessory => {
         try {
-          const compatibleWith = JSON.parse(accessory.compatible_with || '[]');
+          const compatibleWith: number[] = accessory.compatible_with
+            ? JSON.parse(accessory.compatible_with)
+            : [];
           return compatibleWith.includes(selectedBikeType);
         } catch {
           return false;
@@ -80,10 +78,9 @@ export default function AccessoriesStorePage() {
       });
     }
 
-    // Filter by search query
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
-      result = result.filter(accessory => 
+      result = result.filter(accessory =>
         accessory.name.toLowerCase().includes(query) ||
         (accessory.description && accessory.description.toLowerCase().includes(query)) ||
         (accessory.category && accessory.category.toLowerCase().includes(query))
@@ -102,8 +99,8 @@ export default function AccessoriesStorePage() {
         price: accessory.price,
         image: accessory.image_url,
         stock: accessory.in_stock
-      }, 1);
-      
+      }, 1, "accessory");
+
       alert(`Đã thêm ${accessory.name} vào giỏ hàng!`);
     } catch (error) {
       console.error('❌ Lỗi khi thêm vào giỏ:', error);
@@ -213,7 +210,7 @@ export default function AccessoriesStorePage() {
               <> phù hợp với <strong>{BIKE_TYPES.find(b => b.id === selectedBikeType)?.display}</strong></>
             )}
           </p>
-          
+
           {(selectedBikeType !== 'all' || searchQuery) && (
             <button
               onClick={() => {
@@ -232,10 +229,13 @@ export default function AccessoriesStorePage() {
       {filteredAccessories.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {filteredAccessories.map((accessory) => {
-            const compatibleBikes = accessory.compatible_with 
-              ? JSON.parse(accessory.compatible_with)
-              : [];
-              
+            let compatibleBikes: number[] = [];
+            try {
+              compatibleBikes = accessory.compatible_with
+                ? JSON.parse(accessory.compatible_with)
+                : [];
+            } catch {}
+            
             return (
               <div key={accessory.id} className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow duration-300">
                 {/* Image */}
@@ -244,9 +244,7 @@ export default function AccessoriesStorePage() {
                     src={processImageUrl(accessory.image_url)}
                     alt={accessory.name}
                     className="w-full h-48 object-cover hover:scale-105 transition-transform duration-300"
-                    onError={(e) => {
-                      e.currentTarget.src = '/images/placeholder-product.jpg';
-                    }}
+                    onError={(e) => { e.currentTarget.src = '/images/placeholder-product.jpg'; }}
                   />
                 </div>
 
@@ -255,7 +253,7 @@ export default function AccessoriesStorePage() {
                   <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2">
                     {accessory.name}
                   </h3>
-                  
+
                   <p className="text-gray-600 text-sm mb-3 line-clamp-2">
                     {accessory.description}
                   </p>
@@ -282,22 +280,29 @@ export default function AccessoriesStorePage() {
                     </div>
                   )}
 
-                  {/* Price & Add to Cart */}
-                  <div className="flex items-center justify-between mt-4">
-                    <span className="text-lg font-bold text-blue-600">
-                      {accessory.price.toLocaleString('vi-VN')}₫
-                    </span>
-                    
+                  {/* Price & Stock */}
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mt-4">
+                    <div className="flex flex-col">
+                      <span className="text-lg font-bold text-blue-600">
+                        {accessory.price.toLocaleString('vi-VN')}₫
+                      </span>
+                      <span className="text-sm text-gray-500">
+                        {accessory.in_stock > 0
+                          ? `Còn ${accessory.in_stock} sản phẩm`
+                          : 'Hết hàng'}
+                      </span>
+                    </div>
+
                     <button
                       onClick={() => handleAddToCart(accessory)}
-                      disabled={accessory.in_stock === 0}
+                      disabled={accessory.in_stock <= 0}
                       className={`px-4 py-2 rounded-lg font-medium text-sm transition duration-300 ${
-                        accessory.in_stock === 1
+                        accessory.in_stock > 0
                           ? 'bg-blue-600 text-white hover:bg-blue-700'
                           : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                       }`}
                     >
-                      {accessory.in_stock === 1 ? 'Thêm vào giỏ' : 'Hết hàng'}
+                      {accessory.in_stock > 0 ? 'Thêm vào giỏ' : 'Hết hàng'}
                     </button>
                   </div>
 

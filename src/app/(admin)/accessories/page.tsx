@@ -76,14 +76,12 @@ const AccessoryService = {
   }
 };
 
-// 🔥 DANH SÁCH LOẠI XE TƯƠNG THÍCH
+// 🔥 CORRECTED BIKE TYPES MAPPING - ONLY 4 MAIN TYPES
 const BIKE_TYPES = [
-  { id: 1, name: "Road Bike", display: "Xe Đua Road" },
-  { id: 2, name: "Mountain Bike", display: "Xe Địa Hình" },
-  { id: 3, name: "Touring Bike", display: "Xe Du Lịch" },
-  { id: 4, name: "Hybrid Bike", display: "Xe Lai" },
-  { id: 5, name: "City Bike", display: "Xe Đô Thị" },
-  { id: 6, name: "Kids Bike", display: "Xe Trẻ Em" }
+  { id: 1, name: "Mountain Bike", display: "Xe Đạp Địa Hình" },
+  { id: 2, name: "Kids Bike", display: "Xe Đạp Trẻ Em" },
+  { id: 3, name: "Touring Bike", display: "Xe Đạp Tuaring" },
+  { id: 4, name: "Road Bike", display: "Xe Đạp Đua" }
 ];
 
 export default function AccessoriesPage() {
@@ -187,7 +185,7 @@ export default function AccessoriesPage() {
     }
   };
 
-  // 🔥 SUBMIT FORM
+  // 🔥 SUBMIT FORM - FIXED COMPATIBLE_WITH FORMAT
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -207,6 +205,7 @@ export default function AccessoriesPage() {
 
     console.log('📤 Submitting with image URL:', imageUrl);
 
+    // 🔥 FIX: Sử dụng đúng format string JSON cho compatible_with
     const accessoryData = {
       name: formData.name,
       description: formData.description || null,
@@ -215,7 +214,7 @@ export default function AccessoriesPage() {
       in_stock: parseInt(formData.in_stock),
       image_url: imageUrl,
       image_filename: imageFilename,
-      compatible_with: JSON.stringify([...formData.compatible_with].sort((a, b) => a - b)),
+      compatible_with: JSON.stringify(formData.compatible_with.sort((a, b) => a - b)), // 🔥 CHỈ CẦN STRINGIFY ARRAY
     };
 
     console.log('📤 FINAL SUBMIT DATA:', accessoryData);
@@ -245,9 +244,23 @@ export default function AccessoriesPage() {
     }
   };
 
-  // 🔥 START EDIT
+  // 🔥 START EDIT - FIXED PARSING COMPATIBLE_WITH
   const startEdit = (accessory: Accessory) => {
     console.log('✏️ Editing accessory:', accessory);
+    
+    // 🔥 FIX: Parse compatible_with từ string JSON sang array
+    let compatibleArray: number[] = [];
+    try {
+      if (accessory.compatible_with && accessory.compatible_with.trim() !== '') {
+        compatibleArray = JSON.parse(accessory.compatible_with);
+        if (!Array.isArray(compatibleArray)) {
+          compatibleArray = [];
+        }
+      }
+    } catch (error) {
+      console.error('Error parsing compatible_with:', accessory.compatible_with);
+      compatibleArray = [];
+    }
     
     setFormData({
       name: accessory.name,
@@ -257,7 +270,7 @@ export default function AccessoriesPage() {
       in_stock: accessory.in_stock.toString(),
       image_url: accessory.image_url || '',
       image_filename: accessory.image_filename || '',
-      compatible_with: accessory.compatible_with ? JSON.parse(accessory.compatible_with) : [],
+      compatible_with: compatibleArray,
     });
     
     setImagePreview(accessory.image_url || null);
@@ -296,7 +309,7 @@ export default function AccessoriesPage() {
           placeholder="Tìm kiếm phụ kiện theo tên, mô tả, danh mục..."
           value={searchQuery}
           onChange={(e) => handleSearch(e.target.value)}
-className="w-full px-4 py-3 border border-[#D2A0D9] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#8B278C] bg-white text-gray-900"
+          className="w-full px-4 py-3 border border-[#D2A0D9] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#8B278C] bg-white text-gray-900"
         />
         <div className="absolute right-3 top-3">
           {loading ? (
@@ -357,7 +370,7 @@ className="w-full px-4 py-3 border border-[#D2A0D9] rounded-lg focus:outline-non
       <div className="bg-white rounded-2xl shadow-lg p-6 mb-8 border border-[#D2A0D9]">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-2xl font-bold text-[#8B278C]">
-            {editingId ? '✏️ Sửa Phụ Kiện' : 'Thêm phụ kiện mới'}
+            {editingId ? '✏️ Sửa Phụ Kiện' : '➕ Thêm Phụ Kiện Mới'}
           </h2>
           {editingId && (
             <button
@@ -419,23 +432,30 @@ className="w-full px-4 py-3 border border-[#D2A0D9] rounded-lg focus:outline-non
               <label className="block text-sm font-semibold text-[#8B278C] mb-2">
                 Tình Trạng *
               </label>
-              <select
-                value={formData.in_stock}
-                onChange={(e) => setFormData({...formData, in_stock: e.target.value})}
-                className="w-full border border-[#D2A0D9] rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#8B278C] bg-white text-gray-900"
-              >
-                <option value="1">🟢 Còn Hàng</option>
-                <option value="0">🔴 Hết Hàng</option>
-              </select>
+              <div>
+  <label className="block text-sm font-semibold text-[#8B278C] mb-2">
+    Số lượng trong kho *
+  </label>
+  <input
+    type="number"
+    min={0}
+    value={formData.in_stock}
+    onChange={(e) => setFormData({...formData, in_stock: e.target.value})}
+    className="w-full border border-[#D2A0D9] rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#8B278C] bg-white text-gray-900"
+    placeholder="Nhập số lượng..."
+    required
+  />
+</div>
+
             </div>
           </div>
 
-          {/* 🔥 COMPATIBLE WITH SECTION */}
+          {/* 🔥 COMPATIBLE WITH SECTION - CHỈ 4 LOẠI XE */}
           <div className="bg-gradient-to-r from-[#F2D8EE] to-[#D4ADD9] p-6 rounded-2xl border border-[#D2A0D9]">
             <label className="block text-lg font-bold text-[#8B278C] mb-4">
               🚲 Tương thích với loại xe *
             </label>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 gap-4">
               {BIKE_TYPES.map(bikeType => (
                 <label key={bikeType.id} className="flex items-center space-x-3 cursor-pointer p-3 rounded-xl bg-white hover:bg-[#F2D8EE] transition-all duration-200 border border-transparent hover:border-[#B673BF]">
                   <input
@@ -488,7 +508,7 @@ className="w-full px-4 py-3 border border-[#D2A0D9] rounded-lg focus:outline-non
           {/* IMAGE UPLOAD */}
           <div className="bg-gradient-to-r from-[#F2D8EE] to-[#D4ADD9] p-6 rounded-2xl border border-[#D2A0D9]">
             <label className="block text-lg font-bold text-[#8B278C] mb-4">
-              Hình Ảnh Phụ Kiện
+              🖼️ Hình Ảnh Phụ Kiện
             </label>
             <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
               <div>
@@ -508,7 +528,7 @@ className="w-full px-4 py-3 border border-[#D2A0D9] rounded-lg focus:outline-non
                       : 'bg-[#8B278C] text-white hover:bg-[#B673BF] hover:shadow-lg'
                   }`}
                 >
-                  {uploadingImage ? 'Đang tải...' : 'Chọn Hình Ảnh'}
+                  {uploadingImage ? '📤 Đang tải...' : '📁 Chọn Hình Ảnh'}
                 </label>
               </div>
               
@@ -526,7 +546,7 @@ className="w-full px-4 py-3 border border-[#D2A0D9] rounded-lg focus:outline-non
             
             {formData.image_filename && (
               <p className="mt-3 text-sm text-[#8B278C] font-medium">
-                File: {formData.image_filename}
+                📄 File: {formData.image_filename}
               </p>
             )}
           </div>
@@ -534,7 +554,7 @@ className="w-full px-4 py-3 border border-[#D2A0D9] rounded-lg focus:outline-non
           {/* DESCRIPTION */}
           <div>
             <label className="block text-lg font-bold text-[#8B278C] mb-3">
-              Mô Tả Chi Tiết
+              📝 Mô Tả Chi Tiết
             </label>
             <textarea
               value={formData.description}
@@ -551,7 +571,7 @@ className="w-full px-4 py-3 border border-[#D2A0D9] rounded-lg focus:outline-non
               type="submit"
               className="px-8 py-3 bg-gradient-to-r from-[#8B278C] to-[#B673BF] text-white font-semibold rounded-xl hover:from-[#B673BF] hover:to-[#8B278C] transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
             >
-              {editingId ? '💾 Cập Nhật' : 'Thêm Phụ Kiện'}
+              {editingId ? '💾 Cập Nhật' : '➕ Thêm Phụ Kiện'}
             </button>
             
             {editingId && (
@@ -560,7 +580,7 @@ className="w-full px-4 py-3 border border-[#D2A0D9] rounded-lg focus:outline-non
                 onClick={resetForm}
                 className="px-6 py-3 border-2 border-[#B673BF] text-[#8B278C] font-semibold rounded-xl hover:bg-[#F2D8EE] transition-all duration-200"
               >
-                Hủy
+                ❌ Hủy
               </button>
             )}
           </div>
@@ -571,7 +591,7 @@ className="w-full px-4 py-3 border border-[#D2A0D9] rounded-lg focus:outline-non
       <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
         <div className="p-6 border-b border-[#D2A0D9] bg-gradient-to-r from-[#8B278C] to-[#B673BF]">
           <h2 className="text-2xl font-bold text-white">
-            Danh Sách Phụ Kiện ({accessories.length})
+            📦 Danh Sách Phụ Kiện ({accessories.length})
           </h2>
         </div>
         
@@ -604,9 +624,19 @@ className="w-full px-4 py-3 border border-[#D2A0D9] rounded-lg focus:outline-non
             </thead>
             <tbody className="bg-white divide-y divide-[#F2D8EE]">
               {accessories.map((accessory) => {
-                const compatibleBikes = accessory.compatible_with 
-                  ? JSON.parse(accessory.compatible_with)
-                  : [];
+                // 🔥 FIXED: Parse compatible_with đúng cách
+                let compatibleBikes: number[] = [];
+                try {
+                  if (accessory.compatible_with && accessory.compatible_with.trim() !== '') {
+                    compatibleBikes = JSON.parse(accessory.compatible_with);
+                    if (!Array.isArray(compatibleBikes)) {
+                      compatibleBikes = [];
+                    }
+                  }
+                } catch (error) {
+                  console.error('Error parsing compatible_with:', accessory.compatible_with);
+                  compatibleBikes = [];
+                }
                   
                 return (
                   <tr key={accessory.id} className="hover:bg-[#F2D8EE] transition-colors duration-200">
@@ -629,7 +659,10 @@ className="w-full px-4 py-3 border border-[#D2A0D9] rounded-lg focus:outline-non
                       <div className="text-base font-semibold text-[#8B278C]">{accessory.name}</div>
                       {accessory.description && (
                         <div className="text-sm text-gray-600 mt-1 max-w-xs">
-                          {accessory.description}
+                          {accessory.description.length > 100 
+                            ? `${accessory.description.substring(0, 100)}...` 
+                            : accessory.description
+                          }
                         </div>
                       )}
                     </td>
@@ -646,14 +679,17 @@ className="w-full px-4 py-3 border border-[#D2A0D9] rounded-lg focus:outline-non
                     <td className="px-6 py-4">
                       {compatibleBikes.length > 0 ? (
                         <div className="flex flex-wrap gap-1 max-w-xs">
-                          {compatibleBikes.slice(0, 3).map((bikeId: number) => (
-                            <span
-                              key={bikeId}
-                              className="px-2 py-1 bg-[#8B278C] text-white text-xs rounded-full font-medium"
-                            >
-                              {BIKE_TYPES.find(bike => bike.id === bikeId)?.display}
-                            </span>
-                          ))}
+                          {compatibleBikes.slice(0, 3).map((bikeId: number) => {
+                            const bikeType = BIKE_TYPES.find(bike => bike.id === bikeId);
+                            return (
+                              <span
+                                key={bikeId}
+                                className="px-2 py-1 bg-[#8B278C] text-white text-xs rounded-full font-medium"
+                              >
+                                {bikeType?.display || `ID:${bikeId}`}
+                              </span>
+                            );
+                          })}
                           {compatibleBikes.length > 3 && (
                             <span className="px-2 py-1 bg-[#B673BF] text-white text-xs rounded-full font-medium">
                               +{compatibleBikes.length - 3}
@@ -665,13 +701,12 @@ className="w-full px-4 py-3 border border-[#D2A0D9] rounded-lg focus:outline-non
                       )}
                     </td>
                     <td className="px-6 py-4">
-                      <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${
-                        accessory.in_stock === 1 
-                          ? 'bg-green-100 text-green-800 border border-green-200' 
-                          : 'bg-red-100 text-red-800 border border-red-200'
-                      }`}>
-                        {accessory.in_stock === 1 ? '🟢 Còn Hàng' : '🔴 Hết Hàng'}
-                      </span>
+                      <td className="px-6 py-4">
+  <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-[#F2D8EE] text-[#8B278C] border border-[#D2A0D9]">
+    {accessory.in_stock} cái
+  </span>
+</td>
+
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex gap-2">

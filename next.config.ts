@@ -9,20 +9,6 @@ const nextConfig: NextConfig = {
     });
     return config;
   },
-  
-  // 🟢 THÊM PROXY REWRITES VÀO ĐÂY
-  async rewrites() {
-    return [
-      {
-        source: '/api/:path*',
-        destination: 'http://localhost:3001/:path*',
-      },
-      {
-        source: '/customers/:path*', 
-        destination: 'http://localhost:3001/customers/:path*',
-      },
-    ];
-  },
 };
 
 export default nextConfig;

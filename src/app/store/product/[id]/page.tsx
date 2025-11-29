@@ -7,14 +7,30 @@ import { Product } from '../../../../types/store';
 import { StoreService } from '../../../../services/StoreService';
 import { useCart } from "../../../../contexts/CartContext";
 
+// 🔹 INTERFACE CHO THÔNG SỐ KỸ THUẬT
+interface ProductSpecification {
+  id: number;
+  product_id: number;
+  frame_size: string;
+  wheel_size: string;
+  gear_system: string;
+  brake_type: string;
+  weight: string;
+  material: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export default function ProductDetailPage() {
   const params = useParams();
   const router = useRouter();
   const productId = parseInt(params.id as string);
 
   const [product, setProduct] = useState<Product | null>(null);
+  const [specifications, setSpecifications] = useState<ProductSpecification | null>(null);
   const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [specLoading, setSpecLoading] = useState(true);
   const [quantity, setQuantity] = useState(1);
   const [imageStatus, setImageStatus] = useState<'loading' | 'success' | 'error'>('loading');
   const [activeImage, setActiveImage] = useState(0);
@@ -34,7 +50,7 @@ export default function ProductDetailPage() {
     return '/images/placeholder-product.jpg';
   };
 
-  // 🧩 LOAD PRODUCT DATA
+  // 🧩 LOAD PRODUCT DATA VÀ SPECIFICATIONS
   useEffect(() => {
     async function loadProductData() {
       try {
@@ -45,6 +61,19 @@ export default function ProductDetailPage() {
         if (!productData) throw new Error('Product not found');
 
         setProduct(productData);
+
+        // 🧩 LOAD THÔNG SỐ KỸ THUẬT
+        try {
+          const specResponse = await fetch(`http://localhost:3000/product-specifications/product/${productId}`);
+          if (specResponse.ok) {
+            const specData = await specResponse.json();
+            setSpecifications(specData);
+          }
+        } catch (specError) {
+          console.warn('Không thể tải thông số kỹ thuật:', specError);
+        } finally {
+          setSpecLoading(false);
+        }
 
         const related = allProducts
           .filter(p => p.category === productData.category && p.id !== productId)
@@ -267,6 +296,59 @@ export default function ProductDetailPage() {
                     <span>🛒</span>
                     <span>Thêm vào giỏ hàng</span>
                   </button>
+                </div>
+              )}
+            </div>
+
+            {/* 🔥 THÔNG SỐ KỸ THUẬT CHI TIẾT */}
+            <div className="bg-white rounded-2xl p-8 shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-500">
+              <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-3">
+                <span className="text-blue-600">⚙️</span>
+                Thông số kỹ thuật
+              </h2>
+
+              {specLoading ? (
+                <div className="flex justify-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                </div>
+              ) : specifications ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Cột 1 - Thông số cơ bản */}
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center py-3 border-b border-gray-100">
+                      <span className="text-gray-600 font-medium">Kích thước khung</span>
+                      <span className="text-gray-900 font-semibold">{specifications.frame_size}</span>
+                    </div>
+                    <div className="flex justify-between items-center py-3 border-b border-gray-100">
+                      <span className="text-gray-600 font-medium">Kích thước bánh xe</span>
+                      <span className="text-gray-900 font-semibold">{specifications.wheel_size}</span>
+                    </div>
+                    <div className="flex justify-between items-center py-3 border-b border-gray-100">
+                      <span className="text-gray-600 font-medium">Hệ thống chuyển động</span>
+                      <span className="text-gray-900 font-semibold">{specifications.gear_system}</span>
+                    </div>
+                  </div>
+
+                  {/* Cột 2 - Thông số kỹ thuật */}
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center py-3 border-b border-gray-100">
+                      <span className="text-gray-600 font-medium">Loại phanh</span>
+                      <span className="text-gray-900 font-semibold">{specifications.brake_type}</span>
+                    </div>
+                    <div className="flex justify-between items-center py-3 border-b border-gray-100">
+                      <span className="text-gray-600 font-medium">Trọng lượng</span>
+                      <span className="text-gray-900 font-semibold">{specifications.weight} kg</span>
+                    </div>
+                    <div className="flex justify-between items-center py-3 border-b border-gray-100">
+                      <span className="text-gray-600 font-medium">Chất liệu</span>
+                      <span className="text-gray-900 font-semibold">{specifications.material}</span>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  <div className="text-4xl mb-3">🔧</div>
+                  <p>Chưa có thông số kỹ thuật cho sản phẩm này</p>
                 </div>
               )}
             </div>

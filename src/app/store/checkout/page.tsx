@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useCart } from '@/contexts/CartContext';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 interface CheckoutForm {
   name: string;
@@ -16,6 +17,7 @@ interface CheckoutForm {
 
 export default function CheckoutPage() {
   const { state, checkout, clearCart, getCart } = useCart();
+  const router = useRouter();
   
   const [form, setForm] = useState<CheckoutForm>({
     name: '',
@@ -57,6 +59,7 @@ export default function CheckoutPage() {
 
     try {
       console.log('💰 [Checkout] Starting LOCAL checkout process');
+      console.log('🔍 [Checkout] Selected payment method:', form.paymentMethod);
 
       // VALIDATION
       if (state.items.length === 0) {
@@ -80,10 +83,18 @@ export default function CheckoutPage() {
       console.log('✅ [Checkout] LOCAL checkout success:', result);
       
       // ✅ THÊM DEBUG
-      console.log('🔍 [DEBUG] Checkout result order data:', result.order);
-      console.log('🔍 [DEBUG] Checkout result totalAmount:', result.order?.totalAmount);
+      console.log('🔍 [DEBUG] Checkout result:', result);
+      console.log('🔍 [DEBUG] requiresPayment:', result.requiresPayment);
+      console.log('🔍 [DEBUG] paymentMethod:', result.paymentMethod);
       
-      setOrderData(result.order);
+      // ✅ XỬ LÝ CHUYỂN HƯỚNG CHO BANKING
+      if (result.requiresPayment && result.paymentMethod === 'BANKING') {
+        console.log('🔄 Redirecting to bank transfer page...');
+        router.push(`/payment/bank-transfer?orderId=${result.orderId}&amount=${result.total}`);
+        return; // Dừng lại, không hiển thị success page
+      }
+      
+      setOrderData(result.order || result);
       setOrderSuccess(true);
       
     } catch (error: any) {
@@ -104,14 +115,14 @@ export default function CheckoutPage() {
     return new Intl.NumberFormat('vi-VN', {
       style: 'currency',
       currency: 'VND'
-    }).format(isNaN(num) ? 0 : num);
+    }).format(isNaN(num) ? 0 : num).replace('VND', '₫');
   };
 
-  // ✅ TÍNH TOÁN TỔNG TIỀN
+  // ✅ SỬA: TÍNH TOÁN TỔNG TIỀN VỚI ĐIỀU KIỆN MỚI
   const calculateTotals = () => {
     const subtotal = Number(state.total) || 0;
-    const shippingFee = subtotal > 100 ? 0 : 10;
-    const discount = subtotal > 100 ? 10 : 0;
+    const shippingFee = 30000; // ✅ CỐ ĐỊNH 30,000 ₫
+    const discount = subtotal > 1000000 ? 100000 : 0; // ✅ GIẢM 100,000 ₫ KHI ĐƠN HÀNG > 1,000,000 ₫
     const total = subtotal + shippingFee - discount;
     
     return { subtotal, shippingFee, discount, total };
@@ -141,7 +152,7 @@ export default function CheckoutPage() {
               <p><strong>Email:</strong> {orderData.customerEmail || form.email}</p>
               <p><strong>Số điện thoại:</strong> {orderData.customerPhone || form.phone}</p>
               {/* ✅ QUAN TRỌNG: Dùng totalAmount từ API */}
-              <p><strong>Tổng tiền:</strong> {formatCurrency(orderData.totalAmount)}</p>
+              <p><strong>Tổng tiền:</strong> {formatCurrency(orderData.totalAmount || orderData.total)}</p>
               <p><strong>Phương thức thanh toán:</strong> {orderData.paymentMethod || form.paymentMethod}</p>
               <p><strong>Địa chỉ giao hàng:</strong> {orderData.shippingAddress || form.shippingAddress}</p>
               <p><strong>Trạng thái:</strong> {orderData.status || 'Pending'}</p>
@@ -340,7 +351,7 @@ export default function CheckoutPage() {
               </div>
               {discount > 0 && (
                 <div className="flex justify-between text-green-600">
-                  <span>Giảm giá (đơn hàng &gt; $100):</span>
+                  <span>Giảm giá (đơn hàng &gt; 1,000,000₫):</span>
                   <span>-{formatCurrency(discount)}</span>
                 </div>
               )}
@@ -349,6 +360,15 @@ export default function CheckoutPage() {
                 <span>{formatCurrency(total)}</span>
               </div>
             </div>
+
+            {/* Thông báo giảm giá */}
+            {subtotal <= 1000000 && (
+              <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                <p className="text-sm text-yellow-800 text-center">
+                  <strong>Mua thêm {formatCurrency(1000000 - subtotal)}</strong> để được giảm <strong>100,000₫</strong>
+                </p>
+              </div>
+            )}
 
             {/* Security Badges */}
             <div className="mt-6 pt-4 border-t border-gray-200">
