@@ -5,9 +5,12 @@ import { orderService } from '@/services/orderService';
 import { useRouter } from 'next/navigation';
 import { Order, OrderStatus } from '@/types/order';
 
-export default function EditOrderPage({ params }: { params: { id: string } }) {
+import { use } from 'react';
+
+export default function EditOrderPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
-  const orderId = Number(params.id);
+const { id } = use(params); // unwrap Promise
+const orderId = Number(id);
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -123,12 +126,10 @@ export default function EditOrderPage({ params }: { params: { id: string } }) {
                 onChange={(e) => setOrder({...order, status: e.target.value as OrderStatus})}
                 className="w-full border border-[#B673BF] p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#8B278C] bg-[#F2D8EE] text-[#8B278C]"
               >
-                <option value="pending">Pending - Chờ xác nhận</option>
-                <option value="confirmed">Confirmed - Đã xác nhận</option>
-                <option value="processing">Processing - Đang xử lý</option>
-                <option value="shipped">Shipped - Đã giao hàng</option>
-                <option value="delivered">Delivered - Đã giao</option>
-                <option value="cancelled">Cancelled - Đã hủy</option>
+<option value="Pending">Pending - Chờ xác nhận</option>
+<option value="Paid">Paid - Đã thanh toán</option>
+<option value="Shipped">Shipped - Đã giao hàng</option>
+<option value="Canceled">Canceled - Đã hủy</option>
               </select>
             </div>
 

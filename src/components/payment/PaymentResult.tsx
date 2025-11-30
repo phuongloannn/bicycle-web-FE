@@ -6,11 +6,13 @@ import Link from 'next/link';
 export default function PaymentResult({
   status,
   orderId,
-  paymentMethod
+  paymentMethod,
+  onRetry
 }: {
   status: 'success' | 'failed' | 'cancel';
   orderId: string;
   paymentMethod: string;
+  onRetry?: () => void;
 }) {
   return (
     <div className="bg-white rounded-lg shadow-lg p-8 text-center max-w-md w-full mx-4">
@@ -97,6 +99,14 @@ export default function PaymentResult({
           </>
         ) : (
           <>
+              {onRetry && (
+      <button
+        onClick={onRetry}
+        className="block w-full bg-red-600 text-white px-6 py-3 rounded-lg hover:bg-red-700 transition font-semibold"
+      >
+        Quay Lại Nhập Lại Thẻ
+      </button>
+    )}
             <Link
               href="/store/cart"
               className="block w-full bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition font-semibold"
@@ -112,12 +122,13 @@ export default function PaymentResult({
           </>
         )}
         
-        <Link
-          href="/"
-          className="block w-full border-2 border-gray-300 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-50 transition font-semibold"
-        >
-          Về Trang Chủ
-        </Link>
+<Link
+  href="/store"
+  className="block w-full border-2 border-gray-300 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-50 transition font-semibold"
+>
+  Về Trang Chủ
+</Link>
+
       </div>
     </div>
   );

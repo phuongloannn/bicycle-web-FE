@@ -376,15 +376,13 @@ export function CartProvider({ children }: { children: ReactNode }) {
       switch (paymentMethod) {
         case 'COD':
           // ✅ COD - Chỉ cần cập nhật trạng thái đơn hàng
-          paymentResult = await fetch(`http://localhost:3000/orders/${orderId}/payment`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              paymentMethod: 'COD',
-              status: 'pending',
-              amount: state.total
-            })
-          });
+paymentResult = await fetch(`http://localhost:3000/payment/cod/${orderId}`, {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    amount: state.total
+  })
+});
           break;
 
         case 'BANK_TRANSFER':
@@ -614,9 +612,14 @@ export function CartProvider({ children }: { children: ReactNode }) {
           throw new Error(`Không thể kiểm tra thông tin khách hàng: ${existCustomerResponse.status} - ${errorText}`);
         }
       } catch (customerError) {
-        console.error('❌ Customer processing error:', customerError);
-        throw new Error('Không thể xử lý thông tin khách hàng: ' + customerError.message);
-      }
+  console.error('❌ Customer processing error:', customerError);
+
+  if (customerError instanceof Error) {
+    throw new Error('Không thể xử lý thông tin khách hàng: ' + customerError.message);
+  } else {
+    throw new Error('Không thể xử lý thông tin khách hàng: ' + String(customerError));
+  }
+}
 
       // ✅ 3. TẠO ORDER VỚI CUSTOMER ID
       const orderData = {

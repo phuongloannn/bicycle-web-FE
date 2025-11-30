@@ -94,6 +94,12 @@ export default function CheckoutPage() {
         return; // Dừng lại, không hiển thị success page
       }
       
+      if (result.requiresPayment && result.paymentMethod === 'CREDIT_CARD') {
+  console.log('🔄 Redirecting to credit card form...');
+  router.push(`/payment/credit-card/${result.orderId}?amount=${result.total}`);
+  return;
+}
+
       setOrderData(result.order || result);
       setOrderSuccess(true);
       

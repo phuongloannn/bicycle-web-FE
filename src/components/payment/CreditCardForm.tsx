@@ -71,9 +71,17 @@ export default function CreditCardForm({ orderId, totalAmount }: CreditCardFormP
     }
   };
 
-  if (status) {
-    return <PaymentResult status={status} orderId={String(orderId)} paymentMethod="credit_card" />;
-  }
+if (status) {
+  return (
+    <PaymentResult
+      status={status}
+      orderId={String(orderId)}
+      paymentMethod="credit_card"
+      onRetry={() => setStatus(null)} // 👈 thêm callback reset để quay lại form
+    />
+  );
+}
+
 
   return (
     <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow-md p-6 space-y-4">
@@ -85,6 +93,7 @@ export default function CreditCardForm({ orderId, totalAmount }: CreditCardFormP
       {error && (
         <div className="bg-red-50 border border-red-300 text-red-700 p-3 rounded">{error}</div>
       )}
+
 
       <div>
         <label className="block text-sm font-medium text-gray-700">Số Thẻ</label>

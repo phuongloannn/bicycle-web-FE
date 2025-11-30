@@ -35,26 +35,31 @@ export default function StoreHomePage() {
   }, []);
 
   // Animation effects
-  useEffect(() => {
-    const observerOptions = {
-      threshold: 0.1,
-      rootMargin: '0px 0px -50px 0px'
-    };
+// Animation effects
+useEffect(() => {
+  const observerOptions = {
+    threshold: 0.1,
+    rootMargin: '0px 0px -50px 0px'
+  };
 
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add('animate-fade-in-up');
-        }
-      });
-    }, observerOptions);
-
-    document.querySelectorAll('.animate-on-scroll').forEach(el => {
-      observer.observe(el);
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        // Thêm animation class
+        entry.target.classList.add('animate-fade-in-up');
+        // Bỏ các class ẩn mặc định
+        entry.target.classList.remove('opacity-0', 'translate-y-8');
+      }
     });
+  }, observerOptions);
 
-    return () => observer.disconnect();
-  }, [featuredProducts, categories]);
+  document.querySelectorAll('.animate-on-scroll').forEach(el => {
+    observer.observe(el);
+  });
+
+  return () => observer.disconnect();
+}, [featuredProducts, categories]);
+
 
   if (loading) {
     return (
