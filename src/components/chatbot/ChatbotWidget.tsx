@@ -1,4 +1,3 @@
-// src/components/chatbot/ChatbotWidget.tsx
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
@@ -12,57 +11,95 @@ export default function CustomerChatWidget() {
 
   // Scroll xuống cuối khi có tin nhắn mới
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+    if (open) {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [messages, open]);
 
-  // Danh sách câu hỏi mẫu & trả lời
+  // Dữ liệu sản phẩm mẫu (có thể mở rộng lấy từ DB)
+  const products = [
+    {
+      name: 'Xe đạp địa hình thể thao Maruishi ASO',
+      price: 6550000,
+      color_options: ['Đen', 'Xanh', 'Đỏ'],
+      model_year: '2025',
+      category: 'Xe đạp địa hình',
+      type: 'Mountain Bike',
+      accessories: ['mũ bảo hiểm', 'găng tay', 'bình nước', 'đèn xe'],
+    },
+    {
+      name: 'Xe đạp trẻ em NISHIKI ANNA 20',
+      price: 3999000,
+      color_options: ['Hồng', 'Xanh', 'Trắng'],
+      model_year: '2025',
+      category: 'Xe đạp trẻ em',
+      type: 'Kids Bike',
+      accessories: ['mũ bảo hiểm', 'găng tay'],
+    },
+    {
+      name: 'Xe đạp touring Maruishi Half Miler',
+      price: 3333000,
+      color_options: ['Xám', 'Đen'],
+      model_year: '2025',
+      category: 'Xe đạp touring',
+      type: 'Touring Bike',
+      accessories: ['mũ bảo hiểm', 'bình nước'],
+    },
+    {
+      name: 'Xe đạp đua RIKULAU CADENCE',
+      price: 2999000,
+      color_options: ['Đỏ', 'Đen', 'Trắng'],
+      model_year: '2025',
+      category: 'Xe đạp đua',
+      type: 'Road Bike',
+      accessories: ['mũ bảo hiểm', 'găng tay', 'đèn xe'],
+    },
+  ];
+
+  // Danh sách FAQ
   const faqResponses: { question: RegExp; answer: string }[] = [
     { question: /giờ mở cửa/i, answer: 'Cửa hàng mở từ 8h sáng đến 8h tối tất cả các ngày trong tuần.' },
     { question: /đặt hàng/i, answer: 'Bạn có thể đặt hàng trực tiếp trên website hoặc gọi hotline của chúng tôi.' },
     { question: /giao hàng/i, answer: 'Chúng tôi giao hàng toàn quốc, phí vận chuyển tùy theo địa chỉ.' },
     { question: /khuyến mãi/i, answer: 'Các chương trình khuyến mãi được cập nhật trên trang chủ và fanpage của chúng tôi.' },
-    { question: /đổi trả/i, answer: 'Bạn có thể đổi trả sản phẩm trong vòng 7 ngày nếu còn nguyên tem và hóa đơn.' },
+    { question: /đổi trả|chính sách/i, answer: 'Bạn có thể đổi trả sản phẩm trong vòng 7 ngày nếu còn nguyên tem và hóa đơn.' },
     { question: /sản phẩm/i, answer: 'Chúng tôi có nhiều sản phẩm thể thao cao cấp, bạn có muốn xem danh mục không?' },
   ];
 
-  // Hàm gửi tin nhắn
-  const handleSend = async () => {
+  // Hàm tạo phản hồi từ sản phẩm
+  const getProductReply = (msg: string) => {
+    const lowerMsg = msg.toLowerCase();
+    const matched = products.filter(p =>
+      lowerMsg.includes(p.category.toLowerCase()) ||
+      lowerMsg.includes(p.type.toLowerCase())
+    );
+
+    if (matched.length === 0) return null;
+
+    // Chọn sản phẩm đầu tiên
+    const p = matched[0];
+    return `Mình gợi ý sản phẩm **${p.name}** (${p.model_year}), có các màu: ${p.color_options.join(', ')}. Giá khoảng ${p.price.toLocaleString()} VND. Bạn có thể kết hợp thêm ${p.accessories.join(', ')} để trải nghiệm tốt hơn.`;
+  };
+
+  // Gửi tin nhắn
+  const handleSend = () => {
     if (!input.trim()) return;
 
-    // Thêm tin nhắn của user vào history
-    setMessages(prev => [...prev, { from: 'user', text: input }]);
     const userMessage = input;
+    setMessages(prev => [...prev, { from: 'user', text: userMessage }]);
     setInput('');
 
-    // Tìm câu trả lời từ FAQ trước
-    const faqMatch = faqResponses.find(faq => faq.question.test(userMessage));
-    if (faqMatch) {
-      setMessages(prev => [...prev, { from: 'bot', text: faqMatch.answer }]);
+    // 1. Kiểm tra sản phẩm
+    const productReply = getProductReply(userMessage);
+    if (productReply) {
+      setMessages(prev => [...prev, { from: 'bot', text: productReply }]);
       return;
     }
 
-    // Nếu muốn dùng API backend, mở phần này
-    /*
-    try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/api/chat`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: userMessage }),
-      });
-      const data = await res.json();
-      if (data?.reply) {
-        setMessages(prev => [...prev, { from: 'bot', text: data.reply }]);
-      } else {
-        setMessages(prev => [...prev, { from: 'bot', text: 'Xin lỗi, tôi chưa hiểu câu hỏi của bạn.' }]);
-      }
-    } catch (error) {
-      console.error('Chatbot error:', error);
-      setMessages(prev => [...prev, { from: 'bot', text: 'Lỗi kết nối chatbot.' }]);
-    }
-    */
-
-    // Fallback
-    setMessages(prev => [...prev, { from: 'bot', text: 'Xin lỗi, tôi chưa hiểu câu hỏi của bạn.' }]);
+    // 2. Kiểm tra FAQ
+    const faqMatch = faqResponses.find(faq => faq.question.test(userMessage));
+    const botReply = faqMatch?.answer || 'Xin lỗi, tôi chưa hiểu câu hỏi của bạn.';
+    setMessages(prev => [...prev, { from: 'bot', text: botReply }]);
   };
 
   const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -70,60 +107,50 @@ export default function CustomerChatWidget() {
   };
 
   return (
-    <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end">
+    <div className="chat-widget-container">
       {/* Nút mở/đóng */}
       <button
         onClick={() => setOpen(!open)}
-        className="w-16 h-16 bg-gray-900 text-white rounded-full shadow-lg flex items-center justify-center text-2xl hover:bg-gray-800 transition-colors"
+        className="chat-button"
       >
         {open ? '×' : '💬'}
       </button>
 
       {/* Chat window */}
       {open && (
-        <div className="w-80 max-w-xs bg-white dark:bg-gray-800 rounded-xl shadow-xl mt-4 flex flex-col overflow-hidden">
+        <div className="chat-box mt-2">
           {/* Header */}
           <div className="bg-gray-900 text-white px-4 py-2 font-bold text-center">
             Hỗ trợ khách hàng
           </div>
 
           {/* Messages */}
-          <div className="flex-1 p-4 overflow-y-auto h-64 space-y-2">
+          <div className="chat-messages">
             {messages.map((msg, idx) => (
               <div
                 key={idx}
-                className={`flex ${msg.from === 'user' ? 'justify-end' : 'justify-start'}`}
+                className={`flex ${msg.from === 'user' ? 'justify-end' : 'justify-start'} mb-2`}
               >
-                <div
-                  className={`px-3 py-2 rounded-lg max-w-[70%] ${
-                    msg.from === 'user'
-                      ? 'bg-gray-900 text-white'
-                      : 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white'
-                  }`}
-                >
+                <div className={`px-3 py-2 rounded-lg max-w-[70%] ${
+                  msg.from === 'user' ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-900'
+                }`}>
                   {msg.text}
                 </div>
               </div>
             ))}
-            <div ref={messagesEndRef}></div>
+            <div ref={messagesEndRef} />
           </div>
 
           {/* Input */}
-          <div className="flex border-t border-gray-300 dark:border-gray-600 p-2">
+          <div className="chat-input-area">
             <input
               type="text"
               value={input}
-              onChange={(e) => setInput(e.target.value)}
+              onChange={e => setInput(e.target.value)}
               onKeyDown={handleKeyPress}
               placeholder="Nhập câu hỏi..."
-              className="flex-1 px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring focus:border-blue-500 dark:bg-gray-700 dark:text-white"
             />
-            <button
-              onClick={handleSend}
-              className="ml-2 px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors"
-            >
-              Gửi
-            </button>
+            <button onClick={handleSend}>Gửi</button>
           </div>
         </div>
       )}
