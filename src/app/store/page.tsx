@@ -6,6 +6,7 @@ import { Product } from '../../types/store';
 import { StoreService } from '../../services/StoreService';
 import ProductCard from '../../components/store/ProductCard';
 import Image from 'next/image';
+import CustomerChatWidget from '../../components/chatbot/ChatbotWidget';
 
 export default function StoreHomePage() {
   const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
@@ -70,8 +71,8 @@ export default function StoreHomePage() {
   }
 
   return (
-    <div className="min-h-screen bg-white">
-      {/* Hero Section với ảnh thực tế */}
+    <div className="min-h-screen bg-white relative">
+      {/* ================== Hero Section ================== */}
       <section className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 relative overflow-hidden py-8 lg:py-0">
         <div className="absolute inset-0 bg-grid-gray-200/[0.02] bg-[size:60px_60px]"></div>
         
@@ -145,10 +146,10 @@ export default function StoreHomePage() {
               </div>
             </div>
 
-            {/* Image Side với ảnh thực tế - ĐÃ SỬA LỖI MẤT ĐẦU */}
+            {/* Image Side với ảnh thực tế */}
             <div className="relative animate-on-scroll opacity-0 transform translate-x-[50px]">
               <div className="relative bg-white rounded-3xl overflow-hidden shadow-2xl max-w-md lg:max-w-lg mx-auto border border-gray-200">
-                {/* Ảnh thực tế - SỬA LỖI MẤT ĐẦU */}
+                {/* Ảnh thực tế */}
                 <div className="w-full h-[400px] relative bg-gray-100">
                   <Image
                     src="/images/q-sports-collection.jpg"
@@ -193,7 +194,7 @@ export default function StoreHomePage() {
         </div>
       </section>
 
-      {/* Featured Categories */}
+      {/* ================== Featured Categories ================== */}
       {categories.length > 0 && (
         <section className="py-20 lg:py-24 px-6 bg-white relative overflow-hidden">
           <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-gray-400 to-transparent opacity-30"></div>
@@ -257,7 +258,7 @@ export default function StoreHomePage() {
         </section>
       )}
 
-      {/* Featured Products Section */}
+      {/* ================== Featured Products Section ================== */}
       <section className="py-20 lg:py-24 px-6 bg-gray-50 relative overflow-hidden">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16 lg:mb-20 animate-on-scroll opacity-0 transform translate-y-8">
@@ -307,7 +308,7 @@ export default function StoreHomePage() {
         </div>
       </section>
 
-      {/* Features Section */}
+      {/* ================== Features Section ================== */}
       <section className="py-20 lg:py-24 px-6 bg-white relative overflow-hidden">
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-16 lg:mb-20 animate-on-scroll opacity-0 transform translate-y-8">
@@ -364,7 +365,7 @@ export default function StoreHomePage() {
         </div>
       </section>
 
-      {/* Newsletter Section */}
+      {/* ================== Newsletter Section ================== */}
       <section className="py-20 px-6 bg-gray-900 text-white relative overflow-hidden">
         <div className="max-w-4xl mx-auto text-center relative z-10 animate-on-scroll opacity-0 transform translate-y-8">
           <h2 className="text-3xl lg:text-4xl font-black mb-6 break-words">ĐĂNG KÝ NHẬN THÔNG TIN</h2>
@@ -385,7 +386,10 @@ export default function StoreHomePage() {
         </div>
       </section>
 
-      {/* Custom CSS for animations - ĐÃ SỬA LỖI SYNTAX */}
+      {/* ================== Chatbot Widget ================== */}
+<CustomerChatWidget />
+
+      {/* ================== Custom CSS for animations ================== */}
       <style jsx>{`
         @keyframes fadeInUp {
           from {
