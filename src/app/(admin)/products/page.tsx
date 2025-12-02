@@ -1,10 +1,22 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Product, CreateProductDto, UpdateProductDto, getProducts, createProduct, updateProduct, deleteProduct, uploadProductImage, searchProducts } from '@/lib/api/products';
+import {
+  Product,
+  CreateProductDto,
+  UpdateProductDto,
+  getProducts,
+  createProduct,
+  updateProduct,
+  deleteProduct,
+  uploadProductImage,
+  searchProducts,
+} from '@/lib/api/products';
+import { Category, getCategories } from '@/lib/api/categories';
 
 export default function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -43,6 +55,16 @@ export default function ProductsPage() {
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchCategories = async () => {
+    try {
+      const data = await getCategories();
+      setCategories(data);
+    } catch (err) {
+      // Không chặn toàn bộ trang nếu load category lỗi
+      console.error('Failed to load categories', err);
     }
   };
 
@@ -165,6 +187,7 @@ export default function ProductsPage() {
 
   useEffect(() => {
     fetchProducts();
+    fetchCategories();
   }, []);
 
   const SearchBar = () => (
@@ -314,13 +337,20 @@ export default function ProductsPage() {
               <label className="block text-sm font-semibold text-[#8B278C] mb-2">
                 Category
               </label>
-              <input
-                type="text"
+              <select
                 value={formData.category}
-                onChange={(e) => setFormData({...formData, category: e.target.value})}
+                onChange={(e) =>
+                  setFormData({ ...formData, category: e.target.value })
+                }
                 className="w-full px-4 py-3 border border-[#D2A0D9] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#8B278C] bg-white text-gray-900"
-                placeholder="e.g., Electronics, Clothing"
-              />
+              >
+                <option value="">-- Select category --</option>
+                {categories.map((cat) => (
+                  <option key={cat.id} value={cat.name}>
+                    {cat.name}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
 
