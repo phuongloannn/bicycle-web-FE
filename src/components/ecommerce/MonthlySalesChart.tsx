@@ -297,7 +297,7 @@ export default function MonthlySalesChart() {
       <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white px-5 pt-5 dark:border-gray-800 dark:bg-white/[0.03] sm:px-6 sm:pt-6">
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
-            Revenue
+            Revenue Overview(Last 30 days)
           </h3>
 
           <div className="relative inline-block">
@@ -325,7 +325,7 @@ export default function MonthlySalesChart() {
           </div>
         </div>
 
-        <div className="max-w-full overflow-x-auto custom-scrollbar">
+        <div className="max-w-full overflow-hidden custom-scrollbar">
           <div className="-ml-5 min-w-[650px] xl:min-w-full pl-2">
             {loading ? (
               <div className="flex justify-center items-center h-[350px]">
@@ -375,7 +375,7 @@ export default function MonthlySalesChart() {
           </div>
         </div>
 
-        <div className="max-w-full overflow-x-auto custom-scrollbar">
+        <div className="max-w-full overflow-hidden custom-scrollbar">
           <div className="-ml-5 min-w-[650px] xl:min-w-full pl-2">
             {loading ? (
               <div className="flex justify-center items-center h-[350px]">

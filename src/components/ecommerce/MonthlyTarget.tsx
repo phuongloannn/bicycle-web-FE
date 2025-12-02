@@ -37,7 +37,7 @@ export default function MonthlyTarget() {
       fontFamily: "Outfit, sans-serif",
       fontWeight: 500,
       labels: {
-        colors: "#FFFFFF",
+        colors: ["#1E293B", "#1E293B", "#1E293B", "#1E293B"], // Use dark color for light theme
       },
       formatter: function (seriesName: string, opts: any) {
         return seriesName + ": " + opts.w.globals.series[opts.seriesIndex] + "%";
@@ -110,8 +110,8 @@ export default function MonthlyTarget() {
             </Dropdown>
           </div>
         </div>
-        <div className="relative ">
-          <div className="max-h-[330px]">
+        <div className="relative flex flex-col items-center justify-center">
+          <div className="w-full flex items-center justify-center" style={{ minHeight: 330 }}>
             <ReactApexChart
               options={options}
               series={series}
@@ -121,7 +121,6 @@ export default function MonthlyTarget() {
           </div>
         </div>
       </div>
-
     </div>
   );
 }

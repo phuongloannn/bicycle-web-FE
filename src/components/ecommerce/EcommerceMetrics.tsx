@@ -12,6 +12,10 @@ interface DashboardStats {
   lowStockProducts: number;
   monthlyGrowth: number;
   conversionRate: number;
+  customersGrowth: number;
+  ordersGrowth: number;
+  productsGrowth: number;
+  revenueGrowth: number;
 }
 
 export const EcommerceMetrics = ({setIsLoading}: {setIsLoading: (isLoading: boolean) => void}) => {
@@ -25,6 +29,10 @@ export const EcommerceMetrics = ({setIsLoading}: {setIsLoading: (isLoading: bool
     lowStockProducts: 0,
     monthlyGrowth: 0,
     conversionRate: 0,
+    customersGrowth: 0,
+    productsGrowth: 0,
+    revenueGrowth: 0,
+    ordersGrowth: 0,
   });
 
   const fetchDashboardData = async () => {
@@ -42,115 +50,98 @@ export const EcommerceMetrics = ({setIsLoading}: {setIsLoading: (isLoading: bool
       setIsLoading(false);
     }
   };
+
+  const formatMoney = (amount: number) => {
+    const formattedAmount = new Intl.NumberFormat('vi-VN', {
+    style: 'currency',
+    currency: 'VND',
+      }).format(amount);
+    return formattedAmount
+  }
   useEffect(() => {
     fetchDashboardData();
   }, []);
 
   return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4 md:gap-6">
-      {/* <!-- Metric Item Start --> */}
-      <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] md:p-6">
-        <div className="grid grid-cols-12 gap-4 md:gap-6">
-          <div className="col-span-6 space-y-6">
-            <div className="flex items-center justify-center w-12 h-12 bg-gray-100 rounded-xl dark:bg-gray-800">
-              <GroupIcon className="text-black size-6 dark:text-white/90" />
-            </div>
-            <span className="text-sm !text-black dark:!text-gray-400 col-span-12">
-              Customers
-            </span>
+    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+  {[
+    {
+      title: "Customers",
+      value: stats.totalCustomers,
+      icon: <GroupIcon className="size-7 text-white" />,
+      change: stats.customersGrowth,
+      badgeColor: "success",
+      bg: "from-blue-500 to-blue-600",
+    },
+    {
+      title: "Orders",
+      value: stats.totalOrders,
+      icon: <BoxIconLine className="size-7 text-white" />,
+      change: stats.ordersGrowth,
+      badgeColor: "success",
+      bg: "from-amber-500 to-amber-600",
+    },
+    {
+      title: "Revenue",
+      value: formatMoney(stats.totalRevenue),
+      icon: <DollarLineIcon className="size-7 text-white" />,
+      change: stats.revenueGrowth,
+      badgeColor: "success",
+      bg: "from-green-500 to-green-600",
+    },
+    {
+      title: "Products",
+      value: stats.totalProducts,
+      icon: <PieChartIcon className="size-7 text-white" />,
+      change: stats.productsGrowth,
+      badgeColor: "success",
+      bg: "from-purple-500 to-purple-600",
+    },
+  ].map((item, index) => (
+    <div
+      key={index}
+      className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm 
+                 dark:border-gray-800 dark:bg-white/[0.03] 
+                 hover:shadow-md transition-all duration-300 hover:-translate-y-1"
+    >
+      <div className="flex items-start gap-4 flex-col">
+        <div className="flex flex-row gap-4 items-center">
+          <div
+            className={`flex items-center justify-center w-14 h-14 rounded-xl bg-gradient-to-br ${item.bg} text-white shadow-md`}
+          >
+            {item.icon}
           </div>
-          <div className="col-span-6 space-y-6 flex items-center justify-center">
-            <span className="text-4xl font-bold !text-black dark:!text-white">
-              {stats.totalCustomers}
-            </span>
-          </div>
-        </div>
-        <div className="flex items-end justify-end mt-3"> 
-          <Badge color="success">
-            <ArrowUpIcon />
-            10.01%
-          </Badge> 
-        </div>
-      </div>
-      {/* <!-- Metric Item End --> */}
 
-      {/* <!-- Metric Item Start --> */}
-      <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] md:p-6">
-        <div className="grid grid-cols-12 gap-4 md:gap-6">
-          <div className="col-span-6 space-y-6">
-            <div className="flex items-center justify-center w-12 h-12 bg-gray-100 rounded-xl dark:bg-gray-800">
-              <BoxIconLine className="text-black dark:text-white/90" />
-            </div>
-            <span className="text-sm !text-black dark:!text-gray-400 col-span-12">
-              Orders
-            </span>
-          </div>
-          <div className="col-span-6 space-y-6 flex items-center justify-center">
-            <span className="text-4xl font-bold !text-black dark:!text-white">
-              {stats.totalOrders}
-            </span>
-          </div>
+          <p className="text-base font-medium text-gray-600 dark:text-gray-400">
+            {item.title}
+          </p>
         </div>
-        <div className="flex items-end justify-end mt-3"> 
-          <Badge color="success">
-            <ArrowUpIcon />
-            24.5%
-          </Badge> 
-        </div>
-      </div>
-      {/* <!-- Metric Item End --> */}
 
-      {/* <!-- Metric Item Start --> */}
-      <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] md:p-6">
-        <div className="grid grid-cols-12 gap-4 md:gap-6">
-          <div className="col-span-6 space-y-6"> 
-            <div className="flex items-center justify-center w-12 h-12 bg-gray-100 rounded-xl dark:bg-gray-800"> 
-              <DollarLineIcon className="text-black size-6 dark:text-white/90" />
-            </div>
-            <span className="text-sm !text-black dark:!text-gray-400 col-span-12">
-              Revenue
-            </span>
-          </div>
-          <div className="col-span-6 space-y-6 flex items-center justify-center">
-            <span className="text-4xl font-bold !text-black dark:!text-white">
-              {stats.totalRevenue}
-            </span>
-          </div>
-        </div>
-        <div className="flex items-end justify-end mt-3"> 
-          <Badge color="success">
-            <ArrowUpIcon />
-            29.5%
-          </Badge> 
-        </div>
+        <span className="text-4xl font-bold text-gray-900 dark:text-white">
+          {item.value}
+        </span>
       </div>
-      {/* <!-- Metric Item End --> */}
 
-      {/* <!-- Metric Item Start --> */}
-      <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] md:p-6">
-        <div className="grid grid-cols-12 gap-4 md:gap-6">
-          <div className="col-span-6 space-y-6"> 
-            <div className="flex items-center justify-center w-12 h-12 bg-gray-100 rounded-xl dark:bg-gray-800"> 
-              <PieChartIcon className="text-black size-6 dark:text-white/90" />
-            </div>
-            <span className="text-sm !text-black dark:!text-gray-400 col-span-12">
-              Products
-            </span>
-          </div>
-          <div className="col-span-6 space-y-6 flex items-center justify-center">
-            <span className="text-4xl font-bold !text-black dark:!text-white">
-              {stats.totalProducts}
-            </span>
-          </div>
+      <div className="flex flex-row items-center gap-2 mt-4">
+        <div
+          className={`flex items-center rounded-[8px] px-2 py-1 ${
+            item.change < 0
+              ? "text-red-600 bg-red-100"
+              : "text-green-600 bg-green-100"
+          }`}
+        >
+          {item.change < 0 ? (
+            <ArrowDownIcon className="size-4" />
+          ) : (
+            <ArrowUpIcon className="size-4" />
+          )}
+          {Math.abs(item.change)}%
         </div>
-        <div className="flex items-end justify-end mt-3"> 
-          <Badge color="success">
-            <ArrowUpIcon />
-            30.0%
-          </Badge> 
-        </div>
+
+        <span className="text-gray-400 font-light text-xs">vs last month</span>
       </div>
-      {/* <!-- Metric Item End --> */}
     </div>
+  ))}
+</div>
   );
 };
