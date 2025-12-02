@@ -1,7 +1,7 @@
 'use client';
 import { getServerToken } from '@/lib/auth.server';
 import { redirect } from 'next/navigation';
-import CustomerTable from '@/app/customers/CustomerTable';
+import CustomerTable from '@/app/(admin)/customers/CustomerTable';
 import ComponentCard from '@/components/common/ComponentCard';
 import PageBreadcrumb from '@/components/common/PageBreadCrumb';
 import { useRouter } from 'next/navigation';
