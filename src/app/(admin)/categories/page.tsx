@@ -38,7 +38,9 @@ export default function CategoriesPage() {
       const data = await getCategories();
       setCategories(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Không thể tải danh mục');
+      setError(
+        err instanceof Error ? err.message : 'Failed to load categories',
+      );
     } finally {
       setLoading(false);
     }
@@ -66,7 +68,7 @@ export default function CategoriesPage() {
       };
 
       if (!payload.name) {
-        setError('Tên danh mục là bắt buộc');
+        setError('Category name is required');
         setSaving(false);
         return;
       }
@@ -80,7 +82,9 @@ export default function CategoriesPage() {
       resetForm();
       await loadCategories();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Không thể lưu danh mục');
+      setError(
+        err instanceof Error ? err.message : 'Failed to save category',
+      );
     } finally {
       setSaving(false);
     }
@@ -97,14 +101,16 @@ export default function CategoriesPage() {
   };
 
   const handleDelete = async (id: number) => {
-    if (!confirm('Bạn có chắc chắn muốn xóa danh mục này?')) return;
+    if (!confirm('Are you sure you want to delete this category?')) return;
     setSaving(true);
     setError(null);
     try {
       await deleteCategory(id);
       await loadCategories();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Không thể xóa danh mục');
+      setError(
+        err instanceof Error ? err.message : 'Failed to delete category',
+      );
     } finally {
       setSaving(false);
     }
@@ -124,10 +130,10 @@ export default function CategoriesPage() {
       {/* HEADER */}
       <div className="mb-8 text-center">
         <h1 className="text-3xl font-bold text-[#8B278C] mb-2">
-          📂 Quản lý danh mục
+          📂 Category Management
         </h1>
         <p className="text-[#B673BF] text-lg">
-          Thêm, sửa, xóa danh mục sản phẩm
+          Create, edit, and delete product categories
         </p>
       </div>
 
@@ -164,7 +170,7 @@ export default function CategoriesPage() {
         <div className="relative max-w-md">
           <input
             type="text"
-            placeholder="Tìm kiếm theo tên hoặc slug..."
+            placeholder="Search by name or slug..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full px-4 py-3 border border-[#D2A0D9] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#8B278C] bg-white text-gray-900 placeholder-gray-400"
@@ -191,7 +197,9 @@ export default function CategoriesPage() {
         </div>
         {search && (
           <p className="mt-2 text-sm text-[#8B278C]">
-            Tìm thấy {filteredCategories.length} danh mục cho từ khóa &quot;{search}&quot;
+            Found {filteredCategories.length} categories for keyword &quot;
+            {search}
+            &quot;
           </p>
         )}
       </div>
@@ -200,14 +208,14 @@ export default function CategoriesPage() {
       <div className="bg-white rounded-2xl shadow-lg p-6 mb-8 border border-[#D2A0D9]">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-2xl font-bold text-[#8B278C]">
-            {form.id ? '✏️ Sửa danh mục' : '➕ Thêm danh mục mới'}
+            {form.id ? '✏️ Edit Category' : '➕ Add New Category'}
           </h2>
           {form.id && (
             <button
               onClick={resetForm}
               className="px-4 py-2 text-sm text-[#8B278C] hover:text-[#B673BF] transition-colors"
             >
-              ↶ Hủy chỉnh sửa
+              ↶ Cancel edit
             </button>
           )}
         </div>
@@ -216,7 +224,7 @@ export default function CategoriesPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="md:col-span-2">
               <label className="block text-sm font-semibold text-[#8B278C] mb-2">
-                Tên danh mục *
+                Category name *
               </label>
               <input
                 type="text"
@@ -225,7 +233,7 @@ export default function CategoriesPage() {
                   setForm((prev) => ({ ...prev, name: e.target.value }))
                 }
                 className="w-full px-4 py-3 border border-[#D2A0D9] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#8B278C] bg-white text-gray-900 placeholder-gray-400"
-                placeholder="Ví dụ: Mắt kính"
+                placeholder="e.g., Glasses"
                 required
               />
             </div>
@@ -257,7 +265,7 @@ export default function CategoriesPage() {
                 className="w-5 h-5 text-[#8B278C] border-[#D2A0D9] rounded focus:ring-[#8B278C]"
               />
               <span className="ml-2 text-sm font-medium text-gray-700">
-                Đang hoạt động
+                Active
               </span>
             </label>
           </div>
@@ -269,10 +277,10 @@ export default function CategoriesPage() {
               className="px-8 py-3 bg-gradient-to-r from-[#8B278C] to-[#B673BF] text-white font-semibold rounded-xl hover:from-[#B673BF] hover:to-[#8B278C] transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:opacity-60 disabled:cursor-not-allowed"
             >
               {saving
-                ? 'Đang lưu...'
+                ? 'Saving...'
                 : form.id
-                ? '💾 Cập nhật danh mục'
-                : '✨ Thêm danh mục'}
+                ? '💾 Update Category'
+                : '✨ Add Category'}
             </button>
 
             {form.id && (
@@ -281,7 +289,7 @@ export default function CategoriesPage() {
                 onClick={resetForm}
                 className="px-6 py-3 border-2 border-[#B673BF] text-[#8B278C] font-semibold rounded-xl hover:bg-[#F2D8EE] transition-all duration-200"
               >
-                ❌ Hủy
+                ❌ Cancel
               </button>
             )}
           </div>
@@ -292,7 +300,7 @@ export default function CategoriesPage() {
       <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
         <div className="p-6 border-b border-[#D2A0D9] bg-gradient-to-r from-[#8B278C] to-[#B673BF]">
           <h2 className="text-2xl font-bold text-white">
-            📋 Danh sách danh mục ({filteredCategories.length})
+            📋 Category list ({filteredCategories.length})
           </h2>
         </div>
 
@@ -301,19 +309,19 @@ export default function CategoriesPage() {
             <thead className="bg-[#F2D8EE]">
               <tr>
                 <th className="px-6 py-4 text-left text-sm font-semibold text-[#8B278C] uppercase tracking-wider">
-                  Tên
+                  Name
                 </th>
                 <th className="px-6 py-4 text-left text-sm font-semibold text-[#8B278C] uppercase tracking-wider">
                   Slug
                 </th>
                 <th className="px-6 py-4 text-left text-sm font-semibold text-[#8B278C] uppercase tracking-wider">
-                  Trạng thái
+                  Status
                 </th>
                 <th className="px-6 py-4 text-left text-sm font-semibold text-[#8B278C] uppercase tracking-wider">
-                  Ngày tạo
+                  Created at
                 </th>
                 <th className="px-6 py-4 text-left text-sm font-semibold text-[#8B278C] uppercase tracking-wider">
-                  Hành động
+                  Actions
                 </th>
               </tr>
             </thead>
@@ -341,7 +349,7 @@ export default function CategoriesPage() {
                           : 'bg-gray-100 text-gray-600 border border-gray-200'
                       }`}
                     >
-                      {category.is_active ? 'Hoạt động' : 'Tạm ẩn'}
+                      {category.is_active ? 'Active' : 'Inactive'}
                     </span>
                   </td>
                   <td className="px-6 py-4">
@@ -357,13 +365,13 @@ export default function CategoriesPage() {
                         onClick={() => handleEdit(category)}
                         className="px-3 py-1 bg-[#8B278C] text-white text-sm rounded-lg hover:bg-[#B673BF] transition-colors duration-200"
                       >
-                        ✏️ Sửa
+                        ✏️ Edit
                       </button>
                       <button
                         onClick={() => handleDelete(category.id)}
                         className="px-3 py-1 bg-red-500 text-white text-sm rounded-lg hover:bg-red-600 transition-colors duration-200"
                       >
-                        🗑️ Xóa
+                        🗑️ Delete
                       </button>
                     </div>
                   </td>
@@ -377,10 +385,10 @@ export default function CategoriesPage() {
           <div className="text-center py-12">
             <div className="text-6xl mb-4">📂</div>
             <h3 className="text-xl font-semibold text-[#8B278C] mb-2">
-              Chưa có danh mục nào
+              No categories yet
             </h3>
             <p className="text-[#B673BF]">
-              Hãy bắt đầu bằng cách thêm danh mục đầu tiên!
+              Start by adding your first category!
             </p>
           </div>
         )}
