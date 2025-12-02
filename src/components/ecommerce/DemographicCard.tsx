@@ -29,9 +29,9 @@ function ProductItem({ product, apiBase, formatCurrency }: ProductItemProps) {
         <div className="flex items-center justify-center w-12 h-12 rounded-lg overflow-hidden bg-gray-100">
           {product.imageUrl && !imageError ? (
             <img
-              src={`${apiBase}${product.imageUrl}`}
+              src={product.imageUrl}
               alt={product.name}
-              className="w-full h-full object-cover"
+              className="w-full h-full object-fit"
               onError={() => setImageError(true)}
             />
           ) : (
