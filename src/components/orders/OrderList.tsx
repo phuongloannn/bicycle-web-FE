@@ -65,11 +65,9 @@ const OrderList: React.FC = () => {
   const getStatusColor = (status: OrderStatus) => {
     const colors = {
       [OrderStatus.PENDING]: 'bg-yellow-100 text-yellow-800',
-      [OrderStatus.CONFIRMED]: 'bg-blue-100 text-blue-800',
-      [OrderStatus.PROCESSING]: 'bg-purple-100 text-purple-800',
+      [OrderStatus.PAID]: 'bg-green-100 text-green-800',
       [OrderStatus.SHIPPED]: 'bg-indigo-100 text-indigo-800',
-      [OrderStatus.DELIVERED]: 'bg-green-100 text-green-800',
-      [OrderStatus.CANCELLED]: 'bg-red-100 text-red-800',
+      [OrderStatus.CANCELED]: 'bg-red-100 text-red-800',
     };
     return colors[status] || 'bg-gray-100 text-gray-800';
   };
@@ -109,12 +107,10 @@ const OrderList: React.FC = () => {
           className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
           <option value="all">Tất cả trạng thái</option>
-          <option value={OrderStatus.PENDING}>Chờ xác nhận</option>
-          <option value={OrderStatus.CONFIRMED}>Đã xác nhận</option>
-          <option value={OrderStatus.PROCESSING}>Đang xử lý</option>
-          <option value={OrderStatus.SHIPPED}>Đã giao hàng</option>
-          <option value={OrderStatus.DELIVERED}>Đã giao</option>
-          <option value={OrderStatus.CANCELLED}>Đã hủy</option>
+          <option value={OrderStatus.PENDING}>Pending</option>
+          <option value={OrderStatus.PAID}>Paid</option>
+          <option value={OrderStatus.SHIPPED}>Shipped</option>
+          <option value={OrderStatus.CANCELED}>Canceled</option>
         </select>
 
         <button

@@ -1,10 +1,19 @@
+// Enum trạng thái đơn hàng đồng bộ với backend (OrderStatus trong entity)
 export enum OrderStatus {
-  PENDING = 'pending',
-  CONFIRMED = 'confirmed',
-  PROCESSING = 'processing',
-  SHIPPED = 'shipped',
-  DELIVERED = 'delivered',
-  CANCELLED = 'cancelled'
+  PENDING = 'Pending',
+  PAID = 'Paid',
+  SHIPPED = 'Shipped',
+  CANCELED = 'Canceled',
+}
+
+// Thống kê đơn hàng dùng cho dashboard / biểu đồ
+export interface OrderStats {
+  totalOrders: number;
+  totalRevenue: number;
+  averageOrderValue: number;
+  // Backend trả về Record<OrderStatus, number> nhưng để linh hoạt ta dùng string key
+  statusDistribution: Record<string, number>;
+  timeframe: string;
 }
 
 export interface OrderItem {

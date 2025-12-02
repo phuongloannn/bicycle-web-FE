@@ -1,6 +1,12 @@
 // src/services/orderService.ts
 import axios from 'axios';
-import { Order, CreateOrderRequest, UpdateOrderRequest, OrderStatus } from '@/types/order';
+import {
+  Order,
+  CreateOrderRequest,
+  UpdateOrderRequest,
+  OrderStatus,
+  OrderStats,
+} from '@/types/order';
 
 const API_BASE = 'http://localhost:3000';
 
@@ -38,5 +44,11 @@ export const orderService = {
   // Xóa order
   async deleteOrder(id: number): Promise<void> {
     await axios.delete(`${API_BASE}/orders/${id}`);
+  },
+
+  // Thống kê đơn hàng cho dashboard (bao gồm phân bố trạng thái)
+  async getOrderStats(): Promise<OrderStats> {
+    const response = await axios.get<OrderStats>(`${API_BASE}/orders/stats`);
+    return response.data;
   },
 };

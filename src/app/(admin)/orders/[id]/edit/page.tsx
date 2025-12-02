@@ -120,15 +120,15 @@ export default function EditOrderPage({ params }: { params: { id: string } }) {
               </label>
               <select
                 value={order.status}
-                onChange={(e) => setOrder({...order, status: e.target.value as OrderStatus})}
+                onChange={(e) =>
+                  setOrder({ ...order, status: e.target.value as OrderStatus })
+                }
                 className="w-full border border-[#B673BF] p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#8B278C] bg-[#F2D8EE] text-[#8B278C]"
               >
-                <option value="pending">Pending - Chờ xác nhận</option>
-                <option value="confirmed">Confirmed - Đã xác nhận</option>
-                <option value="processing">Processing - Đang xử lý</option>
-                <option value="shipped">Shipped - Đã giao hàng</option>
-                <option value="delivered">Delivered - Đã giao</option>
-                <option value="cancelled">Cancelled - Đã hủy</option>
+                <option value={OrderStatus.PENDING}>Pending - Chờ xác nhận</option>
+                <option value={OrderStatus.PAID}>Paid - Đã thanh toán</option>
+                <option value={OrderStatus.SHIPPED}>Shipped - Đã giao hàng</option>
+                <option value={OrderStatus.CANCELED}>Canceled - Đã hủy</option>
               </select>
             </div>
 
