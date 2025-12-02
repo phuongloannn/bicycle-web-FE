@@ -61,7 +61,8 @@ export default function CategoriesPage() {
       const payload = {
         name: form.name.trim(),
         slug: form.slug.trim() || undefined,
-        is_active: form.is_active ? 1 : 0,
+        // Gửi boolean để khớp với DTO backend
+        is_active: form.is_active,
       };
 
       if (!payload.name) {
@@ -90,7 +91,8 @@ export default function CategoriesPage() {
       id: category.id,
       name: category.name,
       slug: category.slug,
-      is_active: category.is_active === 1,
+      // Ép kiểu sang boolean để khi update luôn gửi boolean lên BE
+      is_active: Boolean(category.is_active),
     });
   };
 
@@ -334,12 +336,12 @@ export default function CategoriesPage() {
                   <td className="px-6 py-4">
                     <span
                       className={`inline-flex px-3 py-1 rounded-full text-xs font-semibold ${
-                        category.is_active === 1
+                        category.is_active
                           ? 'bg-green-100 text-green-800 border border-green-200'
                           : 'bg-gray-100 text-gray-600 border border-gray-200'
                       }`}
                     >
-                      {category.is_active === 1 ? 'Hoạt động' : 'Tạm ẩn'}
+                      {category.is_active ? 'Hoạt động' : 'Tạm ẩn'}
                     </span>
                   </td>
                   <td className="px-6 py-4">
