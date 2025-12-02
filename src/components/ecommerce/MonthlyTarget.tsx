@@ -5,15 +5,56 @@ import { ApexOptions } from "apexcharts";
 import dynamic from "next/dynamic";
 import { Dropdown } from "../ui/dropdown/Dropdown";
 import { MoreDotIcon } from "@/icons";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { DropdownItem } from "../ui/dropdown/DropdownItem";
+import { orderService } from "@/services/orderService";
+import type { OrderStats } from "@/types/order";
+
 // Dynamically import the ReactApexChart component
 const ReactApexChart = dynamic(() => import("react-apexcharts"), {
   ssr: false,
 });
 
+// Thứ tự các trạng thái hiển thị trong biểu đồ
+const STATUS_ORDER: { key: string; label: string }[] = [
+  { key: "Pending", label: "Pending" },
+  { key: "Paid", label: "Paid" },
+  { key: "Shipped", label: "Shipped" },
+  { key: "Canceled", label: "Canceled" },
+];
+
 export default function MonthlyTarget() {
-  const series = [40, 20, 30, 10];
+  const [series, setSeries] = useState<number[]>([0, 0, 0, 0]);
+  const [stats, setStats] = useState<OrderStats | null>(null);
+  const [isOpen, setIsOpen] = useState(false);
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const data = await orderService.getOrderStats();
+        setStats(data);
+
+        const dist = data.statusDistribution || {};
+        const rawValues = STATUS_ORDER.map((s) => dist[s.key] || 0);
+        const total = rawValues.reduce((sum, v) => sum + v, 0);
+
+        // Chuyển sang phần trăm để khớp UI cũ
+        if (total > 0) {
+          const percentages = rawValues.map((v) =>
+            Number(((v / total) * 100).toFixed(2)),
+          );
+          setSeries(percentages);
+        } else {
+          setSeries(rawValues);
+        }
+      } catch (error) {
+        console.error("Lỗi khi tải thống kê đơn hàng:", error);
+      }
+    };
+
+    fetchStats();
+  }, []);
+
   const options: ApexOptions = {
     colors: ["#1E40AF", "#3B82F6", "#60A5FA", "#93C5FD"],
     chart: {
@@ -28,7 +69,7 @@ export default function MonthlyTarget() {
         },
       },
     },
-    labels: ["Processing", "Completed", "Ronding", "Cancelled"],
+    labels: STATUS_ORDER.map((s) => s.label),
     legend: {
       show: true,
       position: "bottom",
@@ -40,7 +81,9 @@ export default function MonthlyTarget() {
         colors: ["#1E293B", "#1E293B", "#1E293B", "#1E293B"], // Use dark color for light theme
       },
       formatter: function (seriesName: string, opts: any) {
-        return seriesName + ": " + opts.w.globals.series[opts.seriesIndex] + "%";
+        return (
+          seriesName + ": " + opts.w.globals.series[opts.seriesIndex] + "%"
+        );
       },
       markers: {
         size: 8,
@@ -55,15 +98,15 @@ export default function MonthlyTarget() {
     },
     tooltip: {
       y: {
-        formatter: function (val: number) {
-          return val + "%";
+        formatter: function (val: number, opts?: any) {
+          const index = opts?.seriesIndex ?? 0;
+          const total = series.reduce((sum, v) => sum + v, 0) || 1;
+          const percent = ((val / total) * 100).toFixed(2);
+          return `${val.toFixed(2)}% (${percent}%)`;
         },
       },
     },
   };
-
-  const [isOpen, setIsOpen] = useState(false);
-
   function toggleDropdown() {
     setIsOpen(!isOpen);
   }
@@ -111,7 +154,10 @@ export default function MonthlyTarget() {
           </div>
         </div>
         <div className="relative flex flex-col items-center justify-center">
-          <div className="w-full flex items-center justify-center" style={{ minHeight: 330 }}>
+          <div
+            className="w-full flex items-center justify-center"
+            style={{ minHeight: 330 }}
+          >
             <ReactApexChart
               options={options}
               series={series}
