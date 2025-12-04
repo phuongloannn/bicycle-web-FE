@@ -50,6 +50,12 @@ export const adjustInventoryQuantity = (id: number, delta: number) =>
 export const deleteInventoryItem = (id: number) =>
   apiClient.delete(`/inventory/${id}`);
 
+// Export Excel (CSV format)
+export const buildInventoryExportUrl = () => {
+  const base = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3000';
+  return `${base}/reports/export?type=inventory`;
+};
+
 export const inventoryApi = {
   getAll: getInventory,
   getByProduct: getInventoryByProduct,
@@ -57,6 +63,7 @@ export const inventoryApi = {
   update: updateInventoryItem,
   adjust: adjustInventoryQuantity,
   delete: deleteInventoryItem,
+  exportUrl: buildInventoryExportUrl,
 };
 
 
