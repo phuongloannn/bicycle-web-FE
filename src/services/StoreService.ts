@@ -93,12 +93,25 @@ export class StoreService {
 
   async getCategories(): Promise<string[]> {
     try {
-      const products = await this.getProducts();
-      const categories = [...new Set(products.map(product => product.category))];
-      return categories.filter(category => category && category.trim() !== '');
+      // Sử dụng API categories từ backend thay vì extract từ products
+      const { getCategories } = await import('@/lib/api/categories');
+      const categories = await getCategories();
+      // Chỉ lấy các category đang active
+      return categories
+        .filter(cat => cat.is_active)
+        .map(cat => cat.name)
+        .filter(name => name && name.trim() !== '');
     } catch (error) {
-      console.error('Failed to extract categories:', error);
-      return [];
+      console.error('Failed to fetch categories:', error);
+      // Fallback: extract từ products nếu API lỗi
+      try {
+        const products = await this.getProducts();
+        const categories = [...new Set(products.map(product => product.category))];
+        return categories.filter(category => category && category.trim() !== '');
+      } catch (fallbackError) {
+        console.error('Failed to extract categories from products:', fallbackError);
+        return [];
+      }
     }
   }
 

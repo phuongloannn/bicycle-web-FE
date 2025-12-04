@@ -108,8 +108,10 @@ export default function CategoriesPage() {
       await deleteCategory(id);
       await loadCategories();
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : 'Failed to delete category',
+      // Extract error message
+      console.log(err, 1111);
+      window.alert(
+        `Cannot delete category. This category is associated with one or more products. Please remove or reassign products first.`
       );
     } finally {
       setSaving(false);

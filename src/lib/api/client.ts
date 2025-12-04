@@ -23,7 +23,28 @@ class ApiClient {
 
       if (!response.ok) {
         const errorText = await response.text();
-        throw new Error(`API Error ${response.status}: ${errorText}`);
+        let errorMessage = `API Error ${response.status}`;
+        
+        // Try to parse JSON error response
+        try {
+          const errorJson = JSON.parse(errorText);
+          // Extract message from NestJS error format
+          if (errorJson.message) {
+            errorMessage = Array.isArray(errorJson.message) 
+              ? errorJson.message.join(', ') 
+              : errorJson.message;
+          } else if (errorJson.error) {
+            errorMessage = errorJson.error;
+          }
+        } catch {
+          // If not JSON, use the text as is
+          errorMessage = errorText || errorMessage;
+        }
+        
+        const error = new Error(errorMessage);
+        (error as any).status = response.status;
+        (error as any).response = errorText;
+        throw error;
       }
 
       return await response.json();
