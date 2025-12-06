@@ -175,6 +175,7 @@ sequenceDiagram
     end
 ```
 
+
 ---
 
 ## Report Types and Data Specifications
