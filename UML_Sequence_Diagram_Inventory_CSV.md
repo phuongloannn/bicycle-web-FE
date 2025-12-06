@@ -8,16 +8,22 @@
 
 **Description:** Admin can import inventory data in bulk by uploading a CSV file containing product information (SKU, product name, quantity, import price, supplier…). The system checks the CSV structure, validates the data, processes each row, updates or adds new inventory records via API (importInventoryCSV), then updates the list on the UI.
 
+**Preconditions:**
+- Admin is logged in
+- Admin has access to Inventory Management page
+- CSV file is in the required format (UTF-8, with headers)
+- Backend API works fine (getInventory, importInventoryCSV)
+
 ---
 
 ### Basic Flow - Successful Import
 
 ```mermaid
 sequenceDiagram
-    participant Admin
-    participant Frontend
-    participant Backend
-    participant Database
+    participant Admin as Admin
+    participant Frontend as Frontend
+    participant Backend as Backend
+    participant Database as Database
 
     Admin->>Frontend: 1. Opens Inventory Management page
     Frontend->>Backend: GET /api/getInventory
@@ -64,23 +70,27 @@ sequenceDiagram
 
 ```mermaid
 sequenceDiagram
-    participant Admin
-    participant Frontend
-    participant Backend
+    participant Admin as Admin
+    participant Frontend as Frontend
+    participant Backend as Backend
 
-    Admin->>Frontend: Selects non-CSV file or invalid format
-    Frontend->>Frontend: Validate file format (.csv extension)
-    
-    alt Invalid extension
-        Frontend-->>Admin: Display error "Invalid file format. Please select a CSV file"
-    else Valid extension but invalid structure
-        Frontend->>Backend: POST /api/importInventoryCSV (invalid CSV)
-        Backend->>Backend: Read file and check header
-        Backend-->>Frontend: Return error {error: "Invalid CSV format", message: "Missing required headers"}
-        Frontend-->>Admin: Display error "Invalid CSV format"
+    rect rgb(255, 240, 240)
+        Note over Admin,Backend: ALTERNATIVE FLOW A1: INVALID FILE FORMAT
+        
+        Admin->>Frontend: Selects non-CSV file or invalid format
+        Frontend->>Frontend: Validate file format (.csv extension)
+        
+        alt Invalid extension
+            Frontend-->>Admin: ❌ Display error: "Invalid file format.<br/>Please select a CSV file"
+        else Valid extension but invalid structure
+            Frontend->>Backend: POST /api/importInventoryCSV (invalid CSV)
+            Backend->>Backend: Read file and check header
+            Backend-->>Frontend: ❌ Return error {error: "Invalid CSV format",<br/>message: "Missing required headers"}
+            Frontend-->>Admin: ❌ Display error: "Invalid CSV format"
+        end
+        
+        Note over Admin,Frontend: Admin must select a valid CSV file
     end
-    
-    Note over Admin,Frontend: Admin must select a valid CSV file
 ```
 
 ---
@@ -89,36 +99,40 @@ sequenceDiagram
 
 ```mermaid
 sequenceDiagram
-    participant Admin
-    participant Frontend
-    participant Backend
-    participant Database
+    participant Admin as Admin
+    participant Frontend as Frontend
+    participant Backend as Backend
+    participant Database as Database
 
-    Admin->>Frontend: Selects CSV file with some invalid rows
-    Frontend->>Backend: POST /api/importInventoryCSV (CSV with errors)
-    Backend->>Backend: Read and validate CSV
-    
-    loop For each row
-        Backend->>Backend: Validate row data
-        alt Valid row
-            Backend->>Database: Update/Insert inventory record
-            Database-->>Backend: Success
-            Backend->>Backend: Increment success_count
-        else Invalid row (missing SKU, negative quantity, etc.)
-            Backend->>Backend: Skip row and log error
-            Backend->>Backend: Add to error_list
-            Backend->>Backend: Increment error_count
+    rect rgb(255, 250, 240)
+        Note over Admin,Database: ALTERNATIVE FLOW A2: ERROR DATA IN CSV
+        
+        Admin->>Frontend: Selects CSV file with some invalid rows
+        Frontend->>Backend: POST /api/importInventoryCSV (CSV with errors)
+        Backend->>Backend: Read and validate CSV
+        
+        loop For each row
+            Backend->>Backend: Validate row data
+            alt Valid row
+                Backend->>Database: Update/Insert inventory record
+                Database-->>Backend: ✅ Success
+                Backend->>Backend: Increment success_count
+            else Invalid row (missing SKU, negative quantity, etc.)
+                Backend->>Backend: ⚠️ Skip row and log error
+                Backend->>Backend: Add to error_list
+                Backend->>Backend: Increment error_count
+            end
         end
-    end
 
-    Backend-->>Frontend: Return partial result {success_count, error_count, error_list}
-    Frontend->>Frontend: Update inventory with successful records
-    Frontend-->>Admin: Display warning message with statistics
-    Frontend-->>Admin: Show error list (row numbers and reasons)
-    
-    Admin->>Admin: Reviews error list
-    Admin->>Admin: Edits CSV file to fix errors
-    Admin->>Frontend: Re-imports corrected CSV file
+        Backend-->>Frontend: ⚠️ Return partial result<br/>{success_count, error_count, error_list}
+        Frontend->>Frontend: Update inventory with successful records
+        Frontend-->>Admin: ⚠️ Display warning message with statistics
+        Frontend-->>Admin: Show error list (row numbers and reasons)
+        
+        Admin->>Admin: Reviews error list
+        Admin->>Admin: Edits CSV file to fix errors
+        Admin->>Frontend: Re-imports corrected CSV file
+    end
 ```
 
 ---
@@ -127,27 +141,31 @@ sequenceDiagram
 
 ```mermaid
 sequenceDiagram
-    participant Admin
-    participant Frontend
-    participant Backend
-    participant Database
+    participant Admin as Admin
+    participant Frontend as Frontend
+    participant Backend as Backend
+    participant Database as Database
 
-    Admin->>Frontend: Selects valid CSV file
-    Frontend->>Backend: POST /api/importInventoryCSV (CSV file)
-    Backend->>Backend: Process file
-    
-    alt Database connection error
-        Backend->>Database: Attempt to update/insert
-        Database-->>Backend: Connection error
-        Backend-->>Frontend: Return error {error: "Database error", status: 500}
-    else Server processing error
-        Backend->>Backend: File processing fails
-        Backend-->>Frontend: Return error {error: "Import failed", status: 500}
+    rect rgb(255, 235, 235)
+        Note over Admin,Database: ALTERNATIVE FLOW A3: BACKEND ERROR
+        
+        Admin->>Frontend: Selects valid CSV file
+        Frontend->>Backend: POST /api/importInventoryCSV (CSV file)
+        Backend->>Backend: Process file
+        
+        alt Database connection error
+            Backend->>Database: Attempt to update/insert
+            Database-->>Backend: ❌ Connection error
+            Backend-->>Frontend: ❌ Return error {error: "Database error",<br/>status: 500}
+        else Server processing error
+            Backend->>Backend: ❌ File processing fails
+            Backend-->>Frontend: ❌ Return error {error: "Import failed",<br/>status: 500}
+        end
+        
+        Frontend-->>Admin: ❌ Display error: "Import failed.<br/>Please try again"
+        
+        Note over Admin,Frontend: Admin can retry the import
     end
-    
-    Frontend-->>Admin: Display error "Import failed. Please try again"
-    
-    Note over Admin,Frontend: Admin can retry the import
 ```
 
 ---
@@ -156,23 +174,27 @@ sequenceDiagram
 
 ```mermaid
 sequenceDiagram
-    participant Admin
-    participant Frontend
-    participant Backend
+    participant Admin as Admin
+    participant Frontend as Frontend
+    participant Backend as Backend
 
-    Admin->>Frontend: Selects CSV file
-    Frontend->>Frontend: Read first 5-10 rows locally
-    Frontend-->>Admin: Display preview table
-    
-    Admin->>Admin: Reviews preview data
-    
-    alt Admin confirms
-        Admin->>Frontend: Clicks "Confirm Import"
-        Frontend->>Backend: POST /api/importInventoryCSV (full CSV)
-        Note over Frontend,Backend: Continue with normal import flow
-    else Admin cancels
-        Admin->>Frontend: Clicks "Cancel"
-        Frontend-->>Admin: Close preview, return to page
+    rect rgb(240, 248, 255)
+        Note over Admin,Backend: OPTIONAL FLOW: PREVIEW BEFORE IMPORT
+        
+        Admin->>Frontend: Selects CSV file
+        Frontend->>Frontend: Read first 5-10 rows locally
+        Frontend-->>Admin: 📋 Display preview table
+        
+        Admin->>Admin: Reviews preview data
+        
+        alt Admin confirms
+            Admin->>Frontend: ✅ Clicks "Confirm Import"
+            Frontend->>Backend: POST /api/importInventoryCSV (full CSV)
+            Note over Frontend,Backend: Continue with normal import flow
+        else Admin cancels
+            Admin->>Frontend: ❌ Clicks "Cancel"
+            Frontend-->>Admin: Close preview, return to page
+        end
     end
 ```
 
@@ -186,16 +208,22 @@ sequenceDiagram
 
 **Description:** Admin can download all inventory data as CSV file for reporting, statistics or offline processing. The system gets inventory data from backend via API (exportInventoryCSV), converts it to CSV and allows admin to download the file to the computer.
 
+**Preconditions:**
+- Admin is logged in
+- Admin is on Inventory Management page
+- Backend has inventory data
+- API works (getInventory, exportInventoryCSV)
+
 ---
 
 ### Basic Flow - Successful Export
 
 ```mermaid
 sequenceDiagram
-    participant Admin
-    participant Frontend
-    participant Backend
-    participant Database
+    participant Admin as Admin
+    participant Frontend as Frontend
+    participant Backend as Backend
+    participant Database as Database
 
     Admin->>Frontend: 1. Opens Inventory Management page
     Frontend->>Backend: GET /api/getInventory
@@ -211,14 +239,14 @@ sequenceDiagram
     Database-->>Backend: Return complete inventory records
     
     Backend->>Backend: 4b. Convert data to CSV format
-    Backend->>Backend: 4c. Add CSV header (SKU, product_name, quantity, import_price, supplier, last_update)
+    Backend->>Backend: 4c. Add CSV header<br/>(SKU, product_name, quantity,<br/>import_price, supplier, last_update)
     Backend->>Backend: 4d. Format data rows
     Backend->>Backend: 4e. Encode as UTF-8
     
-    Backend-->>Frontend: 5. Return CSV file (Content-Type: text/csv)
+    Backend-->>Frontend: 5. Return CSV file<br/>(Content-Type: text/csv)
     
     Frontend->>Frontend: 6. Trigger file download
-    Frontend-->>Admin: Browser downloads "inventory_export_YYYY-MM-DD.csv"
+    Frontend-->>Admin: 📥 Browser downloads<br/>"inventory_export_YYYY-MM-DD.csv"
     
     Admin->>Admin: 7. Opens CSV file in Excel/Sheets
     Admin->>Admin: Views or processes data offline
@@ -230,22 +258,26 @@ sequenceDiagram
 
 ```mermaid
 sequenceDiagram
-    participant Admin
-    participant Frontend
-    participant Backend
-    participant Database
+    participant Admin as Admin
+    participant Frontend as Frontend
+    participant Backend as Backend
+    participant Database as Database
 
-    Admin->>Frontend: Clicks "Export CSV" button
-    Frontend->>Backend: GET /api/exportInventoryCSV
-    Backend->>Database: Query all inventory data
-    Database-->>Backend: Return empty result set
-    
-    Backend->>Backend: Check if data is empty
-    Backend-->>Frontend: Return response {error: "No data", message: "No inventory data to export"}
-    
-    Frontend-->>Admin: Display info message "No inventory data to export"
-    
-    Note over Admin: No file is downloaded
+    rect rgb(255, 248, 240)
+        Note over Admin,Database: ALTERNATIVE FLOW A1: NO INVENTORY DATA
+        
+        Admin->>Frontend: Clicks "Export CSV" button
+        Frontend->>Backend: GET /api/exportInventoryCSV
+        Backend->>Database: Query all inventory data
+        Database-->>Backend: ⚠️ Return empty result set
+        
+        Backend->>Backend: Check if data is empty
+        Backend-->>Frontend: ⚠️ Return response {error: "No data",<br/>message: "No inventory data to export"}
+        
+        Frontend-->>Admin: ℹ️ Display info message:<br/>"No inventory data to export"
+        
+        Note over Admin: No file is downloaded
+    end
 ```
 
 ---
@@ -254,29 +286,33 @@ sequenceDiagram
 
 ```mermaid
 sequenceDiagram
-    participant Admin
-    participant Frontend
-    participant Backend
-    participant Database
+    participant Admin as Admin
+    participant Frontend as Frontend
+    participant Backend as Backend
+    participant Database as Database
 
-    Admin->>Frontend: Clicks "Export CSV" button
-    Frontend->>Backend: GET /api/exportInventoryCSV
-    
-    alt Database error
-        Backend->>Database: Query inventory data
-        Database-->>Backend: Connection/Query error
-        Backend-->>Frontend: Return error {error: "Database error", status: 500}
-    else CSV generation error
-        Backend->>Database: Query inventory data
-        Database-->>Backend: Return data
-        Backend->>Backend: Attempt to generate CSV
-        Backend-->>Frontend: Return error {error: "Export failed", status: 500}
+    rect rgb(255, 235, 235)
+        Note over Admin,Database: ALTERNATIVE FLOW A2: BACKEND ERROR
+        
+        Admin->>Frontend: Clicks "Export CSV" button
+        Frontend->>Backend: GET /api/exportInventoryCSV
+        
+        alt Database error
+            Backend->>Database: Query inventory data
+            Database-->>Backend: ❌ Connection/Query error
+            Backend-->>Frontend: ❌ Return error {error: "Database error",<br/>status: 500}
+        else CSV generation error
+            Backend->>Database: Query inventory data
+            Database-->>Backend: Return data
+            Backend->>Backend: ❌ Attempt to generate CSV fails
+            Backend-->>Frontend: ❌ Return error {error: "Export failed",<br/>status: 500}
+        end
+        
+        Frontend-->>Admin: ❌ Display error: "Export failed.<br/>Please try again"
+        
+        Admin->>Frontend: Clicks "Export CSV" again (retry)
+        Note over Admin,Frontend: Retry export process
     end
-    
-    Frontend-->>Admin: Display error "Export failed. Please try again"
-    
-    Admin->>Frontend: Clicks "Export CSV" again (retry)
-    Note over Admin,Frontend: Retry export process
 ```
 
 ---
@@ -285,29 +321,33 @@ sequenceDiagram
 
 ```mermaid
 sequenceDiagram
-    participant Admin
-    participant Frontend
-    participant Backend
-    participant Database
+    participant Admin as Admin
+    participant Frontend as Frontend
+    participant Backend as Backend
+    participant Database as Database
 
-    Admin->>Frontend: Opens Inventory Management page
-    Frontend-->>Admin: Display page with filter options
-    
-    Admin->>Frontend: Applies filters (category, quantity < 5, supplier, etc.)
-    Frontend->>Frontend: Store filter parameters
-    
-    Admin->>Frontend: Clicks "Export CSV" button
-    Frontend->>Backend: GET /api/exportInventoryCSV?filters={category, min_qty, supplier}
-    
-    Backend->>Database: Query inventory with WHERE conditions
-    Database-->>Backend: Return filtered inventory records
-    
-    Backend->>Backend: Convert filtered data to CSV
-    Backend-->>Frontend: Return CSV file
-    
-    Frontend-->>Admin: Download "inventory_filtered_YYYY-MM-DD.csv"
-    
-    Admin->>Admin: Opens filtered CSV file
+    rect rgb(240, 255, 240)
+        Note over Admin,Database: OPTIONAL FLOW: EXPORT WITH FILTERS
+        
+        Admin->>Frontend: Opens Inventory Management page
+        Frontend-->>Admin: Display page with filter options
+        
+        Admin->>Frontend: Applies filters<br/>(category, quantity < 5, supplier, etc.)
+        Frontend->>Frontend: Store filter parameters
+        
+        Admin->>Frontend: Clicks "Export CSV" button
+        Frontend->>Backend: GET /api/exportInventoryCSV<br/>?filters={category, min_qty, supplier}
+        
+        Backend->>Database: Query inventory with WHERE conditions
+        Database-->>Backend: Return filtered inventory records
+        
+        Backend->>Backend: Convert filtered data to CSV
+        Backend-->>Frontend: Return CSV file
+        
+        Frontend-->>Admin: 📥 Download<br/>"inventory_filtered_YYYY-MM-DD.csv"
+        
+        Admin->>Admin: Opens filtered CSV file
+    end
 ```
 
 ---
@@ -340,7 +380,7 @@ TIR-003,Continental Tire 700x25,80,35.00,Continental,Tires
 
 ### CSV Export File Format
 
-**Headers (UTF-8):**
+**Header (UTF-8):**
 ```
 SKU,product_name,quantity,import_price,supplier,last_update
 ```
@@ -552,4 +592,27 @@ TIR-003,Continental Tire 700x25,80,35.00,Continental,2025-12-05 09:45:00
 - Empty values are represented as empty strings
 - Boolean values: true/false or 1/0
 - Currency values: decimal with 2 places, no currency symbol
+
+---
+
+## Flow Summary
+
+### Import Inventory
+
+| Flow | Description | Result |
+|------|-------------|--------|
+| **Basic Flow** | Admin selects valid CSV file, system validates and imports data successfully | ✅ Data is updated, success message displayed |
+| **A1: Invalid File** | File is not CSV or missing required headers | ❌ Display error, request valid file |
+| **A2: Error Data** | Some rows have invalid data (missing SKU, negative quantity, etc.) | ⚠️ Import valid rows, display error list |
+| **A3: Backend Error** | Database connection error or server processing error | ❌ Display error, allow retry |
+| **Optional: Preview** | Admin previews first 5-10 rows before confirming import | ℹ️ Display preview, allow confirm or cancel |
+
+### Export Inventory
+
+| Flow | Description | Result |
+|------|-------------|--------|
+| **Basic Flow** | Admin clicks export CSV, system generates and downloads file successfully | ✅ CSV file is downloaded |
+| **A1: No Data** | Database has no inventory data | ℹ️ Display info message about no data |
+| **A2: Backend Error** | Database error or CSV generation error | ❌ Display error, allow retry |
+| **Optional: Export with Filters** | Admin applies filters before exporting | ✅ CSV file contains only filtered data |
 
