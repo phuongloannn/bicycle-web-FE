@@ -151,7 +151,7 @@ sequenceDiagram
                         Note over Admin,Frontend: Admin can retry
                     end
                 else CSV generated successfully
-                    Backend-->>Frontend: 9. Return CSV file<br/>(Content-Type: text/csv; charset=utf-8)
+                    Backend-->>Frontend: 9. Return CSV file (Content-Type: text/csv; charset=utf-8)
                     
                     Frontend->>Frontend: 10. Trigger file download
                     
