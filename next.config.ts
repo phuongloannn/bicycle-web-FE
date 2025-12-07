@@ -1,8 +1,20 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
-  webpack(config) {
+  images: {
+    domains: ["localhost"],
+    remotePatterns: [
+      {
+        protocol: "http",
+        hostname: "localhost",
+        port: "3000",
+        pathname: "/uploads/**",
+      },
+    ],
+  },
+
+  // Dùng any để tránh TS error
+  webpack(config: any) {
     config.module.rules.push({
       test: /\.svg$/,
       use: ["@svgr/webpack"],
