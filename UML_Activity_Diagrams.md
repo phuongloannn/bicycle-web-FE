@@ -14,14 +14,14 @@ flowchart TB
     classDef actionNode fill:#fff,stroke:#000,stroke-width:1px,rx:5,ry:5;
     classDef decisionNode fill:#fff,stroke:#000,stroke-width:1px,shape:diamond;
 
-    subgraph "IMPORT INVENTORY BY CSV"
+    subgraph ImportGroup ["IMPORT INVENTORY BY CSV"]
         direction TB
         
-        subgraph Admin
+        subgraph AdminCol ["Admin"]
             direction TB
             Start1(( )):::startNode
             A1[Select CSV File]:::actionNode
-            A2[Click "Import Inventory"]:::actionNode
+            A2[Click Import Inventory]:::actionNode
             A3[Display Result Message]:::actionNode
             End1(( )):::endNode
 
@@ -29,7 +29,7 @@ flowchart TB
             A1 --> A2
         end
 
-        subgraph System
+        subgraph SystemCol ["System"]
             direction TB
             S1[Validate File Format]:::actionNode
             D1{Is Valid?}:::decisionNode
@@ -67,14 +67,14 @@ flowchart TB
     classDef actionNode fill:#fff,stroke:#000,stroke-width:1px,rx:5,ry:5;
     classDef decisionNode fill:#fff,stroke:#000,stroke-width:1px,shape:diamond;
 
-    subgraph "EXPORT INVENTORY BY CSV"
+    subgraph ExportGroup ["EXPORT INVENTORY BY CSV"]
         direction TB
 
-        subgraph Admin
+        subgraph AdminCol2 ["Admin"]
             direction TB
             Start2(( )):::startNode
             A2_1[Filter Inventory List]:::actionNode
-            A2_2[Click "Export CSV"]:::actionNode
+            A2_2[Click Export CSV]:::actionNode
             A2_3[Download CSV File]:::actionNode
             End2(( )):::endNode
 
@@ -82,7 +82,7 @@ flowchart TB
             A2_1 --> A2_2
         end
 
-        subgraph System
+        subgraph SystemCol2 ["System"]
             direction TB
             S2_1[Query Inventory Data]:::actionNode
             D2_1{Data Exists?}:::decisionNode
@@ -115,14 +115,14 @@ flowchart TB
     classDef actionNode fill:#fff,stroke:#000,stroke-width:1px,rx:5,ry:5;
     classDef decisionNode fill:#fff,stroke:#000,stroke-width:1px,shape:diamond;
 
-    subgraph "ADD CATEGORY"
+    subgraph AddCatGroup ["ADD CATEGORY"]
         direction TB
 
-        subgraph Admin
+        subgraph AdminCol3 ["Admin"]
             direction TB
             Start3(( )):::startNode
             A3_1[Enter Category Info]:::actionNode
-            A3_2[Click "Add Category"]:::actionNode
+            A3_2[Click Add Category]:::actionNode
             A3_3[Display Success/Error]:::actionNode
             End3(( )):::endNode
 
@@ -130,7 +130,7 @@ flowchart TB
             A3_1 --> A3_2
         end
 
-        subgraph System
+        subgraph SystemCol3 ["System"]
             direction TB
             S3_1[Validate Input]:::actionNode
             D3_1{Valid?}:::decisionNode
@@ -168,15 +168,15 @@ flowchart TB
     classDef actionNode fill:#fff,stroke:#000,stroke-width:1px,rx:5,ry:5;
     classDef decisionNode fill:#fff,stroke:#000,stroke-width:1px,shape:diamond;
 
-    subgraph "EDIT CATEGORY"
+    subgraph EditCatGroup ["EDIT CATEGORY"]
         direction TB
 
-        subgraph Admin
+        subgraph AdminCol4 ["Admin"]
             direction TB
             Start4(( )):::startNode
             A4_1[Select Category]:::actionNode
             A4_2[Update Info]:::actionNode
-            A4_3[Click "Update"]:::actionNode
+            A4_3[Click Update]:::actionNode
             A4_4[Display Result]:::actionNode
             End4(( )):::endNode
 
@@ -185,7 +185,7 @@ flowchart TB
             A4_2 --> A4_3
         end
 
-        subgraph System
+        subgraph SystemCol4 ["System"]
             direction TB
             S4_1[Validate Input]:::actionNode
             D4_1{Valid?}:::decisionNode
@@ -223,14 +223,14 @@ flowchart TB
     classDef actionNode fill:#fff,stroke:#000,stroke-width:1px,rx:5,ry:5;
     classDef decisionNode fill:#fff,stroke:#000,stroke-width:1px,shape:diamond;
 
-    subgraph "DELETE CATEGORY"
+    subgraph DelCatGroup ["DELETE CATEGORY"]
         direction TB
 
-        subgraph Admin
+        subgraph AdminCol5 ["Admin"]
             direction TB
             Start5(( )):::startNode
             A5_1[Select Category]:::actionNode
-            A5_2[Click "Delete"]:::actionNode
+            A5_2[Click Delete]:::actionNode
             A5_3[Display Result]:::actionNode
             End5(( )):::endNode
 
@@ -238,7 +238,7 @@ flowchart TB
             A5_1 --> A5_2
         end
 
-        subgraph System
+        subgraph SystemCol5 ["System"]
             direction TB
             S5_1[Check Usage]:::actionNode
             D5_1{In Use?}:::decisionNode
@@ -271,15 +271,15 @@ flowchart TB
     classDef actionNode fill:#fff,stroke:#000,stroke-width:1px,rx:5,ry:5;
     classDef decisionNode fill:#fff,stroke:#000,stroke-width:1px,shape:diamond;
 
-    subgraph "EXPORT REPORT BY CSV"
+    subgraph ExportRepGroup ["EXPORT REPORT BY CSV"]
         direction TB
 
-        subgraph Admin
+        subgraph AdminCol6 ["Admin"]
             direction TB
             Start6(( )):::startNode
             A6_1[Select Report Type]:::actionNode
             A6_2[Select Date Range]:::actionNode
-            A6_3[Click "Export Report"]:::actionNode
+            A6_3[Click Export Report]:::actionNode
             A6_4[Download CSV]:::actionNode
             End6(( )):::endNode
 
@@ -288,7 +288,7 @@ flowchart TB
             A6_2 --> A6_3
         end
 
-        subgraph System
+        subgraph SystemCol6 ["System"]
             direction TB
             S6_1[Validate Parameters]:::actionNode
             D6_1{Valid?}:::decisionNode
