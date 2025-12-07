@@ -1,350 +1,403 @@
-# UML Activity Diagrams - Inventory & Category Management
+# UML Activity Diagrams - Bicycle Management System
 
-This document contains UML Activity Diagrams for Inventory Management and Category Management operations.
+This document contains Activity Diagrams for key functionalities of the Bicycle Management System.
+
+---
+
+## Activity Diagram Components
+
+| Component | Symbol | Function |
+|-----------|--------|----------|
+| Initial Node | ● (black circle) | Start |
+| Activity Node | ▭ (rounded rectangle) | An action |
+| Decision Node | ⬟ (diamond) | Branch Yes/No |
+| Flow Arrow | → | Activity flow direction |
+| Final Node | ⊙ (circle with border) | End |
+| Swimlane | Vertical column | Divide responsibility (Admin vs System) |
+| Activity Diagram Frame | Frame | Enclose entire process |
 
 ---
 
 ## 1. Import Inventory by CSV File
 
-### Activity Diagram - Import Inventory CSV
-
 ```mermaid
-flowchart TD
-    Start([Start]) --> SelectFile[Admin: Select CSV file from computer]
-    SelectFile --> ClickImport[Admin: Click Import CSV button]
-    ClickImport --> ValidateFormat{System: Validate file format}
-    
-    ValidateFormat -->|Invalid| ShowFormatError[System: Display error - Invalid file format]
-    ShowFormatError --> End1([End])
-    
-    ValidateFormat -->|Valid| SendToBackend[Frontend: Send CSV file to Backend API]
-    SendToBackend --> ReadFile[Backend: Read CSV file]
-    ReadFile --> CheckHeaders{Backend: Check CSV headers}
-    
-    CheckHeaders -->|Missing headers| ReturnHeaderError[Backend: Return error - Missing required headers]
-    ReturnHeaderError --> DisplayHeaderError[Frontend: Display error message]
-    DisplayHeaderError --> End2([End])
-    
-    CheckHeaders -->|Valid headers| ValidateRows[Backend: Validate each row]
-    ValidateRows --> ProcessRows{Backend: Process each row}
-    
-    ProcessRows --> CheckSKU{Backend: Check if SKU exists in Database}
-    CheckSKU -->|Exists| UpdateRecord[Backend: UPDATE inventory record]
-    CheckSKU -->|Not exists| InsertRecord[Backend: INSERT new inventory record]
-    
-    UpdateRecord --> RecordSuccess[Backend: Increment success_count]
-    InsertRecord --> RecordSuccess
-    
-    ProcessRows -->|Invalid data| SkipRow[Backend: Skip row and log error]
-    SkipRow --> RecordError[Backend: Increment error_count]
-    
-    RecordSuccess --> MoreRows{Backend: More rows to process?}
-    RecordError --> MoreRows
-    
-    MoreRows -->|Yes| ProcessRows
-    MoreRows -->|No| ReturnResult[Backend: Return result with success_count and error_count]
-    
-    ReturnResult --> RefreshList[Frontend: Refresh inventory list]
-    RefreshList --> CheckErrors{Frontend: Check if error_count > 0}
-    
-    CheckErrors -->|Yes| ShowWarning[Frontend: Display warning with error list]
-    CheckErrors -->|No| ShowSuccess[Frontend: Display success message]
-    
-    ShowWarning --> End3([End])
-    ShowSuccess --> End4([End])
+stateDiagram-v2
+    state "IMPORT INVENTORY BY CSV FILE" as frame {
+        state "Admin" as admin_col {
+            [*] --> SelectFile: ●
+            SelectFile --> UploadCSV: Select CSV file from computer
+            UploadCSV --> ClickImport: Click "Import" button
+            ClickImport --> [*]
+            
+            state DisplayResult <<choice>>
+            DisplayResult --> ShowSuccess: Success
+            DisplayResult --> ShowError: Error
+            ShowSuccess --> [*]: Display "Import successful"
+            ShowError --> [*]: Display error message
+        }
+        
+        state "System" as system_col {
+            state ValidateFile <<choice>>
+            state ValidateData <<choice>>
+            state ProcessRows <<choice>>
+            
+            ClickImport --> ReceiveFile: Receive CSV file
+            ReceiveFile --> ValidateFile: Validate file format
+            
+            ValidateFile --> ValidateData: Valid
+            ValidateFile --> ReturnError1: Invalid
+            ReturnError1 --> DisplayResult: Return error response
+            
+            ValidateData --> CheckHeaders: Check CSV headers
+            CheckHeaders --> ProcessRows: Headers valid
+            CheckHeaders --> ReturnError2: Headers invalid
+            ReturnError2 --> DisplayResult
+            
+            ProcessRows --> LoopRows: Loop through each row
+            LoopRows --> ValidateRow: Validate row data
+            
+            state ValidateRow <<choice>>
+            ValidateRow --> CheckSKU: Valid
+            ValidateRow --> LogError: Invalid - Skip row
+            
+            CheckSKU --> UpdateDB: SKU exists - UPDATE
+            CheckSKU --> InsertDB: SKU not exists - INSERT
+            
+            UpdateDB --> NextRow
+            InsertDB --> NextRow
+            LogError --> NextRow
+            
+            NextRow --> MoreRows: More rows?
+            
+            state MoreRows <<choice>>
+            MoreRows --> LoopRows: Yes
+            MoreRows --> ReturnSuccess: No
+            
+            ReturnSuccess --> DisplayResult: Return success response
+        }
+    }
 ```
 
 ---
 
 ## 2. Export Inventory by CSV File
 
-### Activity Diagram - Export Inventory CSV
-
 ```mermaid
-flowchart TD
-    Start([Start]) --> OpenPage[Admin: Open Inventory Management page]
-    OpenPage --> ApplyFilters{Admin: Apply filters?}
-    
-    ApplyFilters -->|Yes| SelectFilters[Admin: Select filters - category, supplier, status]
-    ApplyFilters -->|No| ClickExport[Admin: Click Export CSV button]
-    
-    SelectFilters --> ClickExport
-    ClickExport --> SendRequest[Frontend: Send export request to Backend]
-    
-    SendRequest --> QueryData[Backend: Query inventory data from Database]
-    QueryData --> CheckData{Backend: Check if data exists}
-    
-    CheckData -->|No data| ReturnNoData[Backend: Return error - No data available]
-    ReturnNoData --> DisplayNoData[Frontend: Display info message - No data to export]
-    DisplayNoData --> End1([End])
-    
-    CheckData -->|Data exists| ConvertCSV[Backend: Convert data to CSV format]
-    ConvertCSV --> AddHeaders[Backend: Add CSV headers]
-    AddHeaders --> FormatRows[Backend: Format data rows]
-    FormatRows --> EncodeUTF8[Backend: Encode as UTF-8]
-    
-    EncodeUTF8 --> CheckGeneration{Backend: CSV generation successful?}
-    
-    CheckGeneration -->|Failed| ReturnError[Backend: Return error - Export failed]
-    ReturnError --> DisplayError[Frontend: Display error message]
-    DisplayError --> End2([End])
-    
-    CheckGeneration -->|Success| ReturnCSV[Backend: Return CSV file]
-    ReturnCSV --> TriggerDownload[Frontend: Trigger file download]
-    TriggerDownload --> DownloadFile[Browser: Download inventory_export_YYYY-MM-DD.csv]
-    DownloadFile --> ShowSuccess[Frontend: Display success message]
-    ShowSuccess --> End3([End])
+stateDiagram-v2
+    state "EXPORT INVENTORY BY CSV FILE" as frame {
+        state "Admin" as admin_col {
+            [*] --> OpenPage: ●
+            OpenPage --> ApplyFilters: Open Inventory page
+            ApplyFilters --> ClickExport: Apply filters (optional)
+            ClickExport --> [*]: Click "Export CSV" button
+            
+            state DisplayResult <<choice>>
+            DisplayResult --> DownloadFile: Success
+            DisplayResult --> ShowError: Error
+            DownloadFile --> [*]: Download CSV file
+            ShowError --> [*]: Display error message
+        }
+        
+        state "System" as system_col {
+            state CheckData <<choice>>
+            state GenerateCSV <<choice>>
+            
+            ClickExport --> QueryData: Query inventory data
+            QueryData --> CheckData: Check if data exists
+            
+            CheckData --> ConvertCSV: Data exists
+            CheckData --> ReturnNoData: No data
+            ReturnNoData --> DisplayResult: Return "No data" response
+            
+            ConvertCSV --> AddHeaders: Convert data to CSV format
+            AddHeaders --> FormatRows: Add CSV headers
+            FormatRows --> EncodeUTF8: Format data rows
+            EncodeUTF8 --> GenerateCSV: Encode as UTF-8
+            
+            GenerateCSV --> ReturnFile: Success
+            GenerateCSV --> ReturnError: Error
+            
+            ReturnFile --> DisplayResult: Return CSV file
+            ReturnError --> DisplayResult: Return error response
+        }
+    }
 ```
 
 ---
 
 ## 3. Add Category
 
-### Activity Diagram - Add Category
-
 ```mermaid
-flowchart TD
-    Start([Start]) --> OpenPage[Admin: Open Category Management page]
-    OpenPage --> ClickAdd[Admin: Click Add Category button]
-    ClickAdd --> ShowForm[System: Display Add Category form]
-    
-    ShowForm --> EnterData[Admin: Enter category information - name, description, status]
-    EnterData --> ClickSave[Admin: Click Save button]
-    
-    ClickSave --> ValidateInput{Frontend: Validate input data}
-    
-    ValidateInput -->|Invalid| ShowValidationError[Frontend: Display validation error - Missing required fields]
-    ShowValidationError --> EnterData
-    
-    ValidateInput -->|Valid| SendToBackend[Frontend: Send POST request to Backend API]
-    SendToBackend --> ValidateBackend[Backend: Validate data]
-    ValidateBackend --> CheckDuplicate{Backend: Check if category name exists}
-    
-    CheckDuplicate -->|Exists| ReturnDuplicate[Backend: Return error - Category name already exists]
-    ReturnDuplicate --> DisplayDuplicate[Frontend: Display error message]
-    DisplayDuplicate --> End1([End])
-    
-    CheckDuplicate -->|Not exists| InsertCategory[Backend: INSERT new category into Database]
-    InsertCategory --> CheckInsert{Database: Insert successful?}
-    
-    CheckInsert -->|Failed| ReturnDBError[Backend: Return error - Database error]
-    ReturnDBError --> DisplayDBError[Frontend: Display error message]
-    DisplayDBError --> End2([End])
-    
-    CheckInsert -->|Success| ReturnSuccess[Backend: Return success with new category data]
-    ReturnSuccess --> RefreshList[Frontend: Refresh category list]
-    RefreshList --> CloseForm[Frontend: Close Add Category form]
-    CloseForm --> ShowSuccess[Frontend: Display success message - Category added successfully]
-    ShowSuccess --> End3([End])
+stateDiagram-v2
+    state "ADD CATEGORY" as frame {
+        state "Admin" as admin_col {
+            [*] --> OpenCategoryPage: ●
+            OpenCategoryPage --> ClickAdd: Open Category Management page
+            ClickAdd --> EnterInfo: Click "Add Category" button
+            EnterInfo --> ClickSave: Enter category information
+            ClickSave --> [*]: Click "Save" button
+            
+            state DisplayResult <<choice>>
+            DisplayResult --> ShowSuccess: Success
+            DisplayResult --> ShowError: Error
+            ShowSuccess --> [*]: Display "Category added successfully"
+            ShowError --> [*]: Display error message
+        }
+        
+        state "System" as system_col {
+            state ValidateInput <<choice>>
+            state CheckDuplicate <<choice>>
+            
+            ClickSave --> ReceiveData: Receive category data
+            ReceiveData --> ValidateInput: Validate input data
+            
+            ValidateInput --> CheckName: Valid
+            ValidateInput --> ReturnValidationError: Invalid
+            ReturnValidationError --> DisplayResult: Return validation error
+            
+            CheckName --> CheckDuplicate: Check if category name exists
+            
+            CheckDuplicate --> InsertCategory: Name is unique
+            CheckDuplicate --> ReturnDuplicateError: Name already exists
+            ReturnDuplicateError --> DisplayResult: Return duplicate error
+            
+            InsertCategory --> RefreshList: INSERT category into Database
+            RefreshList --> ReturnSuccess: Refresh category list
+            ReturnSuccess --> DisplayResult: Return success response
+        }
+    }
 ```
 
 ---
 
 ## 4. Edit Category
 
-### Activity Diagram - Edit Category
-
 ```mermaid
-flowchart TD
-    Start([Start]) --> OpenPage[Admin: Open Category Management page]
-    OpenPage --> SelectCategory[Admin: Select category to edit]
-    SelectCategory --> ClickEdit[Admin: Click Edit button]
-    
-    ClickEdit --> ShowForm[System: Display Edit Category form with current data]
-    ShowForm --> ModifyData[Admin: Modify category information]
-    ModifyData --> ClickUpdate[Admin: Click Update button]
-    
-    ClickUpdate --> ValidateInput{Frontend: Validate input data}
-    
-    ValidateInput -->|Invalid| ShowValidationError[Frontend: Display validation error]
-    ShowValidationError --> ModifyData
-    
-    ValidateInput -->|Valid| SendToBackend[Frontend: Send PUT request to Backend API]
-    SendToBackend --> ValidateBackend[Backend: Validate data]
-    ValidateBackend --> CheckExists{Backend: Check if category exists}
-    
-    CheckExists -->|Not found| ReturnNotFound[Backend: Return error - Category not found]
-    ReturnNotFound --> DisplayNotFound[Frontend: Display error - Category may have been deleted]
-    DisplayNotFound --> RefreshList1[Frontend: Refresh category list]
-    RefreshList1 --> End1([End])
-    
-    CheckExists -->|Exists| CheckDuplicate{Backend: Check if new name already exists - excluding current category}
-    
-    CheckDuplicate -->|Duplicate| ReturnDuplicate[Backend: Return error - Category name already exists]
-    ReturnDuplicate --> DisplayDuplicate[Frontend: Display error message]
-    DisplayDuplicate --> End2([End])
-    
-    CheckDuplicate -->|Unique| UpdateCategory[Backend: UPDATE category in Database]
-    UpdateCategory --> CheckUpdate{Database: Update successful?}
-    
-    CheckUpdate -->|Failed| ReturnDBError[Backend: Return error - Database error]
-    ReturnDBError --> DisplayDBError[Frontend: Display error message]
-    DisplayDBError --> End3([End])
-    
-    CheckUpdate -->|Success| ReturnSuccess[Backend: Return success with updated category data]
-    ReturnSuccess --> RefreshList2[Frontend: Refresh category list]
-    RefreshList2 --> CloseForm[Frontend: Close Edit Category form]
-    CloseForm --> ShowSuccess[Frontend: Display success message - Category updated successfully]
-    ShowSuccess --> End4([End])
+stateDiagram-v2
+    state "EDIT CATEGORY" as frame {
+        state "Admin" as admin_col {
+            [*] --> SelectCategory: ●
+            SelectCategory --> ClickEdit: Select category to edit
+            ClickEdit --> ModifyInfo: Click "Edit" button
+            ModifyInfo --> ClickUpdate: Modify category information
+            ClickUpdate --> [*]: Click "Update" button
+            
+            state DisplayResult <<choice>>
+            DisplayResult --> ShowSuccess: Success
+            DisplayResult --> ShowError: Error
+            ShowSuccess --> [*]: Display "Category updated successfully"
+            ShowError --> [*]: Display error message
+        }
+        
+        state "System" as system_col {
+            state ValidateInput <<choice>>
+            state CheckDuplicate <<choice>>
+            state CheckExists <<choice>>
+            
+            ClickUpdate --> ReceiveData: Receive updated category data
+            ReceiveData --> ValidateInput: Validate input data
+            
+            ValidateInput --> CheckExists: Valid
+            ValidateInput --> ReturnValidationError: Invalid
+            ReturnValidationError --> DisplayResult: Return validation error
+            
+            CheckExists --> CheckDuplicate: Category exists
+            CheckExists --> ReturnNotFound: Category not found
+            ReturnNotFound --> DisplayResult: Return not found error
+            
+            CheckDuplicate --> UpdateCategory: Name is unique or unchanged
+            CheckDuplicate --> ReturnDuplicateError: Name already exists
+            ReturnDuplicateError --> DisplayResult: Return duplicate error
+            
+            UpdateCategory --> RefreshList: UPDATE category in Database
+            RefreshList --> ReturnSuccess: Refresh category list
+            ReturnSuccess --> DisplayResult: Return success response
+        }
+    }
 ```
 
 ---
 
 ## 5. Delete Category
 
-### Activity Diagram - Delete Category
-
 ```mermaid
-flowchart TD
-    Start([Start]) --> OpenPage[Admin: Open Category Management page]
-    OpenPage --> SelectCategory[Admin: Select category to delete]
-    SelectCategory --> ClickDelete[Admin: Click Delete button]
-    
-    ClickDelete --> ShowConfirm[System: Display confirmation dialog - Are you sure?]
-    ShowConfirm --> UserChoice{Admin: Confirm or Cancel?}
-    
-    UserChoice -->|Cancel| CloseDialog[Frontend: Close confirmation dialog]
-    CloseDialog --> End1([End])
-    
-    UserChoice -->|Confirm| SendToBackend[Frontend: Send DELETE request to Backend API]
-    SendToBackend --> CheckExists{Backend: Check if category exists}
-    
-    CheckExists -->|Not found| ReturnNotFound[Backend: Return error - Category not found]
-    ReturnNotFound --> DisplayNotFound[Frontend: Display info - Category may have been already deleted]
-    DisplayNotFound --> RefreshList1[Frontend: Refresh category list]
-    RefreshList1 --> End2([End])
-    
-    CheckExists -->|Exists| CheckUsage{Backend: Check if category has associated products}
-    
-    CheckUsage -->|Has products| ReturnInUse[Backend: Return error - Category in use with X products]
-    ReturnInUse --> DisplayInUse[Frontend: Display error - Cannot delete category. It has X associated products]
-    DisplayInUse --> End3([End])
-    
-    CheckUsage -->|No products| DeleteCategory[Backend: DELETE category from Database]
-    DeleteCategory --> CheckDelete{Database: Delete successful?}
-    
-    CheckDelete -->|Failed| ReturnDBError[Backend: Return error - Database error]
-    ReturnDBError --> DisplayDBError[Frontend: Display error message]
-    DisplayDBError --> End4([End])
-    
-    CheckDelete -->|Success| ReturnSuccess[Backend: Return success message]
-    ReturnSuccess --> RefreshList2[Frontend: Refresh category list]
-    RefreshList2 --> ShowSuccess[Frontend: Display success message - Category deleted successfully]
-    ShowSuccess --> End5([End])
+stateDiagram-v2
+    state "DELETE CATEGORY" as frame {
+        state "Admin" as admin_col {
+            [*] --> SelectCategory: ●
+            SelectCategory --> ClickDelete: Select category to delete
+            ClickDelete --> ConfirmDialog: Click "Delete" button
+            
+            state ConfirmDialog <<choice>>
+            ConfirmDialog --> ClickConfirm: Confirm
+            ConfirmDialog --> [*]: Cancel
+            
+            ClickConfirm --> [*]: Click "Confirm" button
+            
+            state DisplayResult <<choice>>
+            DisplayResult --> ShowSuccess: Success
+            DisplayResult --> ShowError: Error/Warning
+            ShowSuccess --> [*]: Display "Category deleted successfully"
+            ShowError --> [*]: Display error/warning message
+        }
+        
+        state "System" as system_col {
+            state CheckExists <<choice>>
+            state CheckInUse <<choice>>
+            
+            ClickConfirm --> CheckExists: Check if category exists
+            
+            CheckExists --> CheckInUse: Category exists
+            CheckExists --> ReturnNotFound: Category not found
+            ReturnNotFound --> DisplayResult: Return not found error
+            
+            CheckInUse --> CheckProducts: Check if category has products
+            
+            CheckProducts --> DeleteCategory: No products
+            CheckProducts --> ReturnInUseError: Has products
+            ReturnInUseError --> DisplayResult: Return "Category in use" error
+            
+            DeleteCategory --> RefreshList: DELETE category from Database
+            RefreshList --> ReturnSuccess: Refresh category list
+            ReturnSuccess --> DisplayResult: Return success response
+        }
+    }
 ```
 
 ---
 
 ## 6. Export Report by CSV
 
-### Activity Diagram - Export Report CSV
-
 ```mermaid
-flowchart TD
-    Start([Start]) --> OpenPage[Admin: Open Reports page]
-    OpenPage --> SelectType[Admin: Select report type - Sales, Inventory, Orders, Revenue]
-    SelectType --> SelectDateRange[Admin: Select date range - start_date, end_date]
-    SelectDateRange --> ApplyFilters{Admin: Apply filters?}
-    
-    ApplyFilters -->|Yes| SelectFilters[Admin: Select filters - category, status, customer, etc.]
-    ApplyFilters -->|No| ClickExport[Admin: Click Export Report button]
-    
-    SelectFilters --> ClickExport
-    ClickExport --> ValidateParams{Frontend: Validate parameters}
-    
-    ValidateParams -->|Invalid| ShowValidationError[Frontend: Display error - Please select report type and date range]
-    ShowValidationError --> End1([End])
-    
-    ValidateParams -->|Valid| CheckDateRange{Frontend: Validate date range}
-    
-    CheckDateRange -->|Invalid| ShowDateError[Frontend: Display error - End date must be after start date]
-    ShowDateError --> End2([End])
-    
-    CheckDateRange -->|Valid| SendRequest[Frontend: Send POST request to Backend API]
-    SendRequest --> QueryData[Backend: Query report data from Database based on type and filters]
-    
-    QueryData --> CheckDBConnection{Backend: Database connection successful?}
-    
-    CheckDBConnection -->|Failed| ReturnDBError[Backend: Return error - Database error]
-    ReturnDBError --> DisplayDBError[Frontend: Display error - Export failed. Please try again]
-    DisplayDBError --> End3([End])
-    
-    CheckDBConnection -->|Success| CheckData{Backend: Check if data exists}
-    
-    CheckData -->|No data| ReturnNoData[Backend: Return error - No data available for selected criteria]
-    ReturnNoData --> DisplayNoData[Frontend: Display info - No data available. Please try different criteria]
-    DisplayNoData --> End4([End])
-    
-    CheckData -->|Data exists| ProcessData[Backend: Process and aggregate data]
-    ProcessData --> ConvertCSV[Backend: Convert data to CSV format]
-    ConvertCSV --> AddHeaders[Backend: Add CSV headers based on report type]
-    AddHeaders --> FormatRows[Backend: Format data rows]
-    FormatRows --> AddSummary[Backend: Add summary/totals row]
-    AddSummary --> EncodeUTF8[Backend: Encode as UTF-8]
-    
-    EncodeUTF8 --> CheckGeneration{Backend: CSV generation successful?}
-    
-    CheckGeneration -->|Failed| ReturnGenError[Backend: Return error - Export failed]
-    ReturnGenError --> DisplayGenError[Frontend: Display error - Failed to generate report]
-    DisplayGenError --> End5([End])
-    
-    CheckGeneration -->|Success| ReturnCSV[Backend: Return CSV file]
-    ReturnCSV --> TriggerDownload[Frontend: Trigger file download]
-    TriggerDownload --> DownloadFile[Browser: Download report_type_YYYY-MM-DD_to_YYYY-MM-DD.csv]
-    DownloadFile --> ShowSuccess[Frontend: Display success message - Report exported successfully]
-    ShowSuccess --> End6([End])
+stateDiagram-v2
+    state "EXPORT REPORT BY CSV" as frame {
+        state "Admin" as admin_col {
+            [*] --> OpenReportPage: ●
+            OpenReportPage --> SelectType: Open Reports page
+            SelectType --> SelectDateRange: Select report type
+            SelectDateRange --> ApplyFilters: Select date range
+            ApplyFilters --> ClickExport: Apply filters (optional)
+            ClickExport --> [*]: Click "Export Report" button
+            
+            state DisplayResult <<choice>>
+            DisplayResult --> DownloadFile: Success
+            DisplayResult --> ShowError: Error
+            DownloadFile --> [*]: Download CSV report file
+            ShowError --> [*]: Display error message
+        }
+        
+        state "System" as system_col {
+            state ValidateParams <<choice>>
+            state CheckData <<choice>>
+            state GenerateCSV <<choice>>
+            
+            ClickExport --> ValidateParams: Validate export parameters
+            
+            ValidateParams --> QueryReport: Valid
+            ValidateParams --> ReturnValidationError: Invalid
+            ReturnValidationError --> DisplayResult: Return validation error
+            
+            QueryReport --> CheckData: Query report data from Database
+            
+            CheckData --> ProcessData: Data exists
+            CheckData --> ReturnNoData: No data
+            ReturnNoData --> DisplayResult: Return "No data" response
+            
+            ProcessData --> AggregateData: Process and aggregate data
+            AggregateData --> ConvertCSV: Convert to CSV format
+            ConvertCSV --> AddHeaders: Add CSV headers
+            AddHeaders --> FormatRows: Format data rows
+            FormatRows --> AddSummary: Add summary row
+            AddSummary --> EncodeUTF8: Encode as UTF-8
+            EncodeUTF8 --> GenerateCSV: Generate CSV file
+            
+            GenerateCSV --> ReturnFile: Success
+            GenerateCSV --> ReturnError: Error
+            
+            ReturnFile --> DisplayResult: Return CSV file
+            ReturnError --> DisplayResult: Return error response
+        }
+    }
 ```
-
----
-
-## Diagram Conventions
-
-### Symbols Used
-
-- **Rounded Rectangle (Start/End)**: Start and End points
-- **Rectangle**: Process/Action steps
-- **Diamond**: Decision points
-- **Arrow**: Flow direction
-
-### Actor Notation
-
-- **Admin**: Actions performed by the administrator
-- **Frontend**: Frontend application processes
-- **Backend**: Backend API processes
-- **System**: General system processes
-- **Database**: Database operations
-- **Browser**: Browser actions
-
-### Color Coding (Conceptual)
-
-- **Admin actions**: User interactions
-- **Frontend processes**: Client-side validation and UI updates
-- **Backend processes**: Server-side logic and validation
-- **Database operations**: Data persistence operations
-- **Success paths**: Green flow
-- **Error paths**: Red flow
-- **Decision points**: Yellow/Orange
 
 ---
 
 ## Notes
 
-1. All activity diagrams follow the swimlane concept with clear separation between Admin and System responsibilities
-2. Each diagram includes comprehensive error handling paths
-3. Validation occurs at multiple levels (Frontend and Backend)
-4. Database operations include success/failure checks
-5. User feedback is provided at each critical step
-6. All diagrams support the complete user journey from start to end
+### Swimlane Structure
+- **Admin Column**: Contains all user actions and interactions
+- **System Column**: Contains all backend processing and database operations
+
+### Decision Nodes
+- Represented by `<<choice>>` state type in Mermaid
+- Branch based on conditions (Valid/Invalid, Success/Error, Yes/No)
+
+### Flow Direction
+- Flows from top to bottom
+- Crosses between Admin and System swimlanes when interaction occurs
+- Returns to Admin column for final display/feedback
+
+### Activity Nodes
+- Rounded rectangles represent actions/activities
+- Clear, concise descriptions of each step
+- Grouped logically within respective swimlanes
+
+### Initial and Final Nodes
+- `[*]` represents both initial (●) and final (⊙) nodes
+- Each diagram starts with initial node in Admin column
+- Each diagram ends with final node in Admin column after displaying result
 
 ---
 
-## Flow Summary
+## Diagram Legend
 
-| Feature | Main Steps | Decision Points | End States |
-|---------|-----------|-----------------|------------|
-| **Import Inventory CSV** | Select file → Validate → Process rows → Update DB | File format, Headers, Row data validity | Success, Partial success with errors, Error |
-| **Export Inventory CSV** | Apply filters → Request export → Query data → Generate CSV | Data exists, Generation success | Success, No data, Error |
-| **Add Category** | Enter data → Validate → Check duplicate → Insert | Input validity, Name uniqueness | Success, Validation error, Duplicate error, DB error |
-| **Edit Category** | Modify data → Validate → Check exists → Update | Input validity, Category exists, Name uniqueness | Success, Not found, Duplicate error, DB error |
-| **Delete Category** | Confirm → Check exists → Check usage → Delete | User confirmation, Category exists, Has products | Success, Cancelled, Not found, In use, DB error |
-| **Export Report CSV** | Select type → Set date range → Apply filters → Query → Generate CSV | Parameters valid, Date range valid, Data exists, Generation success | Success, Validation error, No data, DB error, Generation error |
+| Symbol | Meaning |
+|--------|---------|
+| ● | Initial Node (Start) |
+| ▭ | Activity Node (Action) |
+| ⬟ | Decision Node (Choice) |
+| → | Flow Arrow (Direction) |
+| ⊙ | Final Node (End) |
+| \|\| | Swimlane Separator (Admin \| System) |
+
+---
+
+## Process Summary
+
+### Import Inventory by CSV
+1. Admin selects and uploads CSV file
+2. System validates file format and headers
+3. System processes each row (validate, update/insert)
+4. System returns result with success/error count
+5. Admin sees success message or error details
+
+### Export Inventory by CSV
+1. Admin opens page and applies filters
+2. Admin clicks export button
+3. System queries and validates data
+4. System generates CSV file
+5. Admin downloads file or sees error message
+
+### Add Category
+1. Admin enters new category information
+2. System validates input and checks for duplicates
+3. System inserts category into database
+4. Admin sees success or error message
+
+### Edit Category
+1. Admin modifies existing category information
+2. System validates input and checks for duplicates
+3. System updates category in database
+4. Admin sees success or error message
+
+### Delete Category
+1. Admin selects category and confirms deletion
+2. System checks if category is in use
+3. System deletes category if not in use
+4. Admin sees success or warning message
+
+### Export Report by CSV
+1. Admin selects report type, date range, and filters
+2. System validates parameters and queries data
+3. System processes, aggregates, and converts to CSV
+4. Admin downloads report file or sees error message
