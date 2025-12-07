@@ -1,6 +1,6 @@
 # UML Sequence Diagram - Export Report by CSV
 
-This document contains 1 comprehensive UML Sequence Diagram for Export Report by CSV operation.
+This document contains UML Sequence Diagrams for Export Report by CSV operation.
 
 ---
 
@@ -26,14 +26,7 @@ This document contains 1 comprehensive UML Sequence Diagram for Export Report by
 
 ---
 
-### Comprehensive Sequence Diagram - Export Report (All Flows Combined)
-
-This diagram shows the complete export report flow including:
-- **Basic Flow**: Successful export of report data
-- **Alternative Flow A1**: No data available for selected criteria
-- **Alternative Flow A2**: Invalid date range or filter parameters
-- **Alternative Flow A3**: Backend/Database errors or CSV generation errors
-- **Optional Flow**: Apply filters and date range before export
+### Basic Flow - Successful Export
 
 ```mermaid
 sequenceDiagram
@@ -44,137 +37,157 @@ sequenceDiagram
 
     Admin->>Frontend: 1. Opens Reports page
     Frontend->>Backend: GET /api/getReportTypes
-    Backend-->>Frontend: Return available report types (Sales, Inventory, Orders, Revenue)
+    Backend-->>Frontend: Return available report types
     Frontend-->>Admin: Display Reports page with report type options
 
     Admin->>Frontend: 2. Selects report type (e.g., Sales Report)
     Frontend-->>Admin: Display report configuration panel
-
-    rect rgb(240, 255, 240)
-        Note over Admin,Frontend: OPTIONAL: Apply Filters and Date Range
-        Admin->>Frontend: 3a. Selects date range (start_date, end_date)
-        Admin->>Frontend: 3b. Applies filters (category, product, customer, status, etc.)
-        Frontend->>Frontend: Validate date range
-        
-        alt Invalid date range
-            rect rgb(255, 240, 240)
-                Note over Frontend,Admin: ALTERNATIVE FLOW A2: Invalid Date Range
-                Frontend-->>Admin: Display error - Invalid date range. End date must be after start date
-                Admin->>Frontend: Corrects date range
-            end
-        end
-        
-        Frontend->>Frontend: Store filter parameters
-    end
-
+    
+    Admin->>Frontend: 3. Selects date range and filters
     Admin->>Frontend: 4. Clicks Export Report button
     
     Frontend->>Frontend: 5. Validate export parameters
+    Frontend->>Backend: 6. POST /api/exportReport
     
-    alt Missing required parameters
-        rect rgb(255, 240, 240)
-            Note over Frontend,Admin: ALTERNATIVE FLOW A2: Missing Parameters
-            Frontend-->>Admin: Display error - Please select report type and date range
-            Note over Admin,Frontend: Admin must complete selection
-        end
-    else Valid parameters
-        alt With filters applied
-            Frontend->>Backend: 6. POST /api/exportReport with filters
-        else Without filters
-            Frontend->>Backend: 6. POST /api/exportReport
-        end
+    Backend->>Database: 7. Query report data based on type and filters
+    Database-->>Backend: Return report records
+    
+    Backend->>Backend: 8a. Convert data to CSV format
+    Backend->>Backend: 8b. Add CSV headers
+    Backend->>Backend: 8c. Format data rows
+    Backend->>Backend: 8d. Encode as UTF-8
+    
+    Backend-->>Frontend: 9. Return CSV file
+    Frontend->>Frontend: 10. Trigger file download
+    Frontend-->>Admin: Browser downloads CSV file
+    
+    Admin->>Admin: 11. Opens CSV file in Excel/Sheets
+```
+
+---
+
+### Alternative Flow A1 - No Data Available
+
+```mermaid
+sequenceDiagram
+    participant Admin
+    participant Frontend
+    participant Backend
+    participant Database
+
+    rect rgb(255, 248, 240)
+        Note over Admin,Database: ALTERNATIVE FLOW A1: NO DATA AVAILABLE
         
-        alt Database connection error
-            rect rgb(255, 235, 235)
-                Note over Backend,Database: ALTERNATIVE FLOW A3: Database Error
-                Backend->>Database: Query report data
-                Database-->>Backend: Connection/Query error
-                Backend-->>Frontend: Return error - Database error (status 500)
-                Frontend-->>Admin: Display error - Export failed. Please try again
-                Admin->>Frontend: Clicks Export Report again (retry)
-                Note over Admin,Frontend: Admin can retry export
-            end
-        else Database query successful
-            Backend->>Database: 7a. Query report data based on type and filters
-            
-            Note over Backend,Database: Generating Report Data
-            alt Sales Report
-                Backend->>Database: SELECT sales data JOIN products, customers WHERE date BETWEEN ? AND ?
-            else Inventory Report
-                Backend->>Database: SELECT inventory data JOIN categories, suppliers WHERE conditions
-            else Orders Report
-                Backend->>Database: SELECT orders data JOIN customers, products WHERE date BETWEEN ? AND ?
-            else Revenue Report
-                Backend->>Database: SELECT revenue data GROUP BY period WHERE date BETWEEN ? AND ?
-            end
-            
-            Database-->>Backend: Return report records
-            
-            alt No data available
-                rect rgb(255, 248, 240)
-                    Note over Backend,Frontend: ALTERNATIVE FLOW A1: No Report Data
-                    Database-->>Backend: Return empty result set
-                    Backend->>Backend: Check if data is empty
-                    Backend-->>Frontend: Return response - No data available for selected criteria
-                    Frontend-->>Admin: Display info - No data available for the selected period and filters. Please try different criteria
-                    Note over Admin: No file is downloaded
-                end
-            else Data available
-                Backend->>Backend: 7b. Process and aggregate data (calculations, summaries)
-                Backend->>Backend: 7c. Format data for CSV export
-                
-                rect rgb(240, 248, 255)
-                    Note over Backend: CSV Generation Process
-                    Backend->>Backend: 8a. Convert data to CSV format
-                    
-                    alt Sales Report CSV
-                        Backend->>Backend: Add headers - Order_ID, Date, Customer, Product, Quantity, Unit_Price, Total, Status
-                    else Inventory Report CSV
-                        Backend->>Backend: Add headers - SKU, Product_Name, Category, Quantity, Unit_Price, Supplier, Last_Update
-                    else Orders Report CSV
-                        Backend->>Backend: Add headers - Order_ID, Date, Customer, Total_Amount, Status, Payment_Method
-                    else Revenue Report CSV
-                        Backend->>Backend: Add headers - Period, Total_Sales, Total_Orders, Average_Order_Value, Revenue
-                    end
-                    
-                    Backend->>Backend: 8b. Format data rows
-                    Backend->>Backend: 8c. Add summary/totals row (if applicable)
-                    Backend->>Backend: 8d. Encode as UTF-8
-                end
-                
-                alt CSV generation error
-                    rect rgb(255, 235, 235)
-                        Note over Backend,Frontend: ALTERNATIVE FLOW A3: CSV Generation Error
-                        Backend->>Backend: Attempt to generate CSV fails
-                        Backend-->>Frontend: Return error - Export failed (status 500)
-                        Frontend-->>Admin: Display error - Failed to generate report. Please try again
-                        Note over Admin,Frontend: Admin can retry
-                    end
-                else CSV generated successfully
-                    Backend-->>Frontend: 9. Return CSV file (Content-Type: text/csv; charset=utf-8)
-                    
-                    Frontend->>Frontend: 10. Trigger file download
-                    
-                    alt Sales Report
-                        Frontend-->>Admin: Browser downloads sales_report_YYYY-MM-DD_to_YYYY-MM-DD.csv
-                    else Inventory Report
-                        Frontend-->>Admin: Browser downloads inventory_report_YYYY-MM-DD.csv
-                    else Orders Report
-                        Frontend-->>Admin: Browser downloads orders_report_YYYY-MM-DD_to_YYYY-MM-DD.csv
-                    else Revenue Report
-                        Frontend-->>Admin: Browser downloads revenue_report_YYYY-MM-DD_to_YYYY-MM-DD.csv
-                    end
-                    
-                    Frontend-->>Admin: Display success message - Report exported successfully
-                    
-                    Admin->>Admin: 11. Opens CSV file in Excel/Sheets
-                    Admin->>Admin: Analyzes report data offline
-                end
-            end
-        end
+        Admin->>Frontend: Clicks Export Report button
+        Frontend->>Backend: POST /api/exportReport
+        Backend->>Database: Query report data
+        Database-->>Backend: ⚠️ Return empty result set
+        
+        Backend->>Backend: Check if data is empty
+        Backend-->>Frontend: ⚠️ Return response {error: "No data"}
+        
+        Frontend-->>Admin: ℹ️ Display info message:<br/>"No data available for the selected criteria"
+        
+        Note over Admin: No file is downloaded
     end
 ```
 
+---
+
+### Alternative Flow A2 - Invalid Parameters
+
+```mermaid
+sequenceDiagram
+    participant Admin
+    participant Frontend
+
+    rect rgb(255, 240, 240)
+        Note over Admin,Frontend: ALTERNATIVE FLOW A2: INVALID PARAMETERS
+        
+        Admin->>Frontend: Enters invalid date range or missing parameters
+        Admin->>Frontend: Clicks Export Report button
+        
+        Frontend->>Frontend: Validate export parameters
+        
+        alt Missing report type
+            Frontend-->>Admin: ❌ Display error: "Please select report type"
+        else Invalid date range
+            Frontend-->>Admin: ❌ Display error: "End date must be after start date"
+        end
+        
+        Note over Admin,Frontend: Admin must correct parameters
+    end
+```
+
+---
+
+### Alternative Flow A3 - Backend Error
+
+```mermaid
+sequenceDiagram
+    participant Admin
+    participant Frontend
+    participant Backend
+    participant Database
+
+    rect rgb(255, 235, 235)
+        Note over Admin,Database: ALTERNATIVE FLOW A3: BACKEND ERROR
+        
+        Admin->>Frontend: Clicks Export Report button
+        Frontend->>Backend: POST /api/exportReport
+        
+        alt Database connection error
+            Backend->>Database: Query report data
+            Database-->>Backend: ❌ Connection error
+            Backend-->>Frontend: ❌ Return error {error: "Database error", status: 500}
+        else CSV generation error
+            Backend->>Database: Query report data
+            Database-->>Backend: Return data
+            Backend->>Backend: ❌ Attempt to generate CSV fails
+            Backend-->>Frontend: ❌ Return error {error: "Export failed", status: 500}
+        end
+        
+        Frontend-->>Admin: ❌ Display error: "Export failed. Please try again"
+        
+        Admin->>Frontend: Clicks Export Report again (retry)
+        Note over Admin,Frontend: Retry export process
+    end
+```
+
+---
+
+### Optional Flow - Export with Filters
+
+```mermaid
+sequenceDiagram
+    participant Admin
+    participant Frontend
+    participant Backend
+    participant Database
+
+    rect rgb(240, 255, 240)
+        Note over Admin,Database: OPTIONAL FLOW: EXPORT WITH FILTERS
+        
+        Admin->>Frontend: Opens Reports page
+        Frontend-->>Admin: Display page with filter options
+        
+        Admin->>Frontend: Selects report type
+        Admin->>Frontend: Applies date range (start_date, end_date)
+        Admin->>Frontend: Applies filters (category, status, etc.)
+        Frontend->>Frontend: Store filter parameters
+        
+        Admin->>Frontend: Clicks Export Report button
+        Frontend->>Backend: POST /api/exportReport with filters
+        
+        Backend->>Database: Query report data with WHERE conditions
+        Database-->>Backend: Return filtered report records
+        
+        Backend->>Backend: Convert filtered data to CSV
+        Backend-->>Frontend: Return CSV file
+        
+        Frontend-->>Admin: Download filtered CSV file
+    end
+```
 
 ---
 
@@ -193,9 +206,8 @@ Order_ID,Date,Customer_Name,Customer_Email,Product_Name,SKU,Quantity,Unit_Price,
 ```csv
 Order_ID,Date,Customer_Name,Customer_Email,Product_Name,SKU,Quantity,Unit_Price,Total_Amount,Discount,Tax,Grand_Total,Payment_Method,Status
 ORD-001,2025-12-01 10:30:00,John Doe,john@email.com,Mountain Bike X1,MTB-001,1,599.99,599.99,0.00,59.99,659.98,Credit Card,Completed
-ORD-001,2025-12-01 10:30:00,John Doe,john@email.com,Bike Helmet,HLM-001,1,49.99,49.99,5.00,4.49,49.48,Credit Card,Completed
 ORD-002,2025-12-02 14:15:00,Jane Smith,jane@email.com,Road Bike R2,RDB-002,1,899.99,899.99,50.00,84.99,934.98,PayPal,Completed
-SUMMARY,,,,,Total Orders: 2,Total Items: 3,,1549.97,55.00,149.47,1644.44,,
+SUMMARY,,,,,Total Orders: 2,Total Items: 2,,1499.98,50.00,144.98,1594.96,,
 ```
 
 ---
@@ -214,10 +226,7 @@ SKU,Product_Name,Category,Quantity_In_Stock,Reorder_Level,Unit_Cost,Unit_Price,T
 SKU,Product_Name,Category,Quantity_In_Stock,Reorder_Level,Unit_Cost,Unit_Price,Total_Value,Supplier,Last_Restocked,Status
 MTB-001,Mountain Bike X1,Mountain Bikes,15,5,450.00,599.99,6749.85,BikeSupplier Inc,2025-11-15,In Stock
 RDB-002,Road Bike R2,Road Bikes,8,3,650.00,899.99,5199.92,BikeSupplier Inc,2025-11-20,In Stock
-HLM-001,Bike Helmet,Accessories,45,10,25.00,49.99,1125.00,SafetyGear Co,2025-12-01,In Stock
-CHN-003,Bike Chain,Parts,120,20,8.00,15.99,960.00,PartsMaster Ltd,2025-11-25,In Stock
-TIR-004,Road Tire 700x25,Tires,3,10,20.00,39.99,60.00,TirePro,2025-10-15,Low Stock
-SUMMARY,,,Total Items: 191,,,Total Value: 14094.77,,,
+SUMMARY,,,Total Items: 23,,,Total Value: 11949.77,,,
 ```
 
 ---
@@ -228,16 +237,15 @@ SUMMARY,,,Total Items: 191,,,Total Value: 14094.77,,,
 
 **Headers (UTF-8):**
 ```
-Order_ID,Order_Date,Customer_Name,Customer_Email,Customer_Phone,Total_Items,Subtotal,Discount,Tax,Shipping,Grand_Total,Payment_Method,Payment_Status,Order_Status,Delivery_Date
+Order_ID,Order_Date,Customer_Name,Customer_Email,Total_Items,Subtotal,Discount,Tax,Shipping,Grand_Total,Payment_Method,Payment_Status,Order_Status
 ```
 
 **Example Data:**
 ```csv
-Order_ID,Order_Date,Customer_Name,Customer_Email,Customer_Phone,Total_Items,Subtotal,Discount,Tax,Shipping,Grand_Total,Payment_Method,Payment_Status,Order_Status,Delivery_Date
-ORD-001,2025-12-01 10:30:00,John Doe,john@email.com,+1234567890,2,649.98,5.00,64.49,10.00,719.47,Credit Card,Paid,Delivered,2025-12-05
-ORD-002,2025-12-02 14:15:00,Jane Smith,jane@email.com,+1987654321,1,899.99,50.00,84.99,15.00,949.98,PayPal,Paid,Shipped,2025-12-08
-ORD-003,2025-12-03 09:45:00,Bob Johnson,bob@email.com,+1122334455,3,1249.97,0.00,124.99,10.00,1384.96,Bank Transfer,Pending,Processing,
-SUMMARY,,,,,Total Orders: 3,Total Items: 6,2799.94,55.00,274.47,35.00,3054.41,,,
+Order_ID,Order_Date,Customer_Name,Customer_Email,Total_Items,Subtotal,Discount,Tax,Shipping,Grand_Total,Payment_Method,Payment_Status,Order_Status
+ORD-001,2025-12-01 10:30:00,John Doe,john@email.com,2,649.98,5.00,64.49,10.00,719.47,Credit Card,Paid,Delivered
+ORD-002,2025-12-02 14:15:00,Jane Smith,jane@email.com,1,899.99,50.00,84.99,15.00,949.98,PayPal,Paid,Shipped
+SUMMARY,,,Total Orders: 2,Total Items: 3,1549.97,55.00,149.48,25.00,1669.45,,,
 ```
 
 ---
@@ -248,16 +256,15 @@ SUMMARY,,,,,Total Orders: 3,Total Items: 6,2799.94,55.00,274.47,35.00,3054.41,,,
 
 **Headers (UTF-8):**
 ```
-Period,Period_Start,Period_End,Total_Orders,Total_Items_Sold,Gross_Revenue,Total_Discounts,Total_Tax,Net_Revenue,Average_Order_Value,Top_Category
+Period,Period_Start,Period_End,Total_Orders,Total_Items_Sold,Gross_Revenue,Total_Discounts,Total_Tax,Net_Revenue,Average_Order_Value
 ```
 
 **Example Data:**
 ```csv
-Period,Period_Start,Period_End,Total_Orders,Total_Items_Sold,Gross_Revenue,Total_Discounts,Total_Tax,Net_Revenue,Average_Order_Value,Top_Category
-Week 48,2025-11-25,2025-12-01,45,128,25489.55,1245.50,2498.95,26742.00,594.26,Mountain Bikes
-Week 49,2025-12-02,2025-12-08,52,145,28765.40,1580.25,2826.54,29011.69,557.92,Road Bikes
-Week 50,2025-12-09,2025-12-15,38,95,19234.80,890.00,1913.48,20258.28,533.31,Accessories
-SUMMARY,2025-11-25,2025-12-15,135,368,73489.75,3715.75,7238.97,76012.97,544.37,
+Period,Period_Start,Period_End,Total_Orders,Total_Items_Sold,Gross_Revenue,Total_Discounts,Total_Tax,Net_Revenue,Average_Order_Value
+Week 48,2025-11-25,2025-12-01,45,128,25489.55,1245.50,2498.95,26742.00,594.26
+Week 49,2025-12-02,2025-12-08,52,145,28765.40,1580.25,2826.54,29011.69,557.92
+SUMMARY,2025-11-25,2025-12-08,97,273,54254.95,2825.75,5325.49,55753.69,559.33
 ```
 
 ---
@@ -389,16 +396,15 @@ SUMMARY,2025-11-25,2025-12-15,135,368,73489.75,3715.75,7238.97,76012.97,544.37,
 
 ## Flow Summary
 
-### Export Report - All Flows Combined
+### Export Report - All Flows
 
-| Flow Type | Trigger Condition | Result |
-|-----------|------------------|--------|
-| **Basic Flow** | Valid report type, date range, and filters selected | ✅ CSV report file successfully downloaded |
-| **Optional: Filters** | Admin applies filters before export | 📥 CSV contains only filtered data |
-| **A1: No Data** | No data available for selected criteria | ℹ️ Info message displayed, no file downloaded |
-| **A2: Invalid Parameters** | Missing report type, invalid date range, or wrong filter format | ❌ Validation error displayed |
-| **A3: Database Error** | Database connection or query fails | ❌ Error message displayed, allows retry |
-| **A3: CSV Error** | CSV generation process fails | ❌ Error message displayed, allows retry |
+| Flow | Description | Result |
+|------|-------------|--------|
+| **Basic Flow** | Admin selects report type, date range, and filters, then exports successfully | ✅ CSV file is downloaded |
+| **A1: No Data** | No data available for selected criteria | ℹ️ Display info message about no data |
+| **A2: Invalid Parameters** | Missing report type or invalid date range | ❌ Display validation error |
+| **A3: Backend Error** | Database error or CSV generation error | ❌ Display error, allow retry |
+| **Optional: Export with Filters** | Admin applies filters before exporting | ✅ CSV file contains only filtered data |
 
 ---
 
@@ -455,7 +461,6 @@ SUMMARY,2025-11-25,2025-12-15,135,368,73489.75,3715.75,7238.97,76012.97,544.37,
 
 - **Color coding in diagrams:**
   - 🟢 Green background (`rgb(240, 255, 240)`): Optional filter selection
-  - 🔵 Blue background (`rgb(240, 248, 255)`): CSV generation process
   - 🟡 Orange background (`rgb(255, 248, 240)`): Warning/no data flows
   - 🔴 Red background (`rgb(255, 235, 235)`): Error flows
   - 🔴 Light red background (`rgb(255, 240, 240)`): Validation errors
