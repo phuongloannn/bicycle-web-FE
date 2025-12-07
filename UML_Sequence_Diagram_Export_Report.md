@@ -44,22 +44,22 @@ sequenceDiagram
 
     Admin->>Frontend: 1. Opens Reports page
     Frontend->>Backend: GET /api/getReportTypes
-    Backend-->>Frontend: Return available report types(Sales, Inventory, Orders, Revenue)
+    Backend-->>Frontend: Return available report types (Sales, Inventory, Orders, Revenue)
     Frontend-->>Admin: Display Reports page with report type options
 
-    Admin->>Frontend: 2. Selects report type(e.g., "Sales Report")
+    Admin->>Frontend: 2. Selects report type (e.g., Sales Report)
     Frontend-->>Admin: Display report configuration panel
 
     rect rgb(240, 255, 240)
         Note over Admin,Frontend: OPTIONAL: Apply Filters and Date Range
-        Admin->>Frontend: 3a. Selects date range(start_date, end_date)
-        Admin->>Frontend: 3b. Applies filters(category, product, customer, status, etc.)
+        Admin->>Frontend: 3a. Selects date range (start_date, end_date)
+        Admin->>Frontend: 3b. Applies filters (category, product, customer, status, etc.)
         Frontend->>Frontend: Validate date range
         
         alt Invalid date range
             rect rgb(255, 240, 240)
                 Note over Frontend,Admin: ALTERNATIVE FLOW A2: Invalid Date Range
-                Frontend-->>Admin: ❌ Display error: "Invalid date range.End date must be after start date"
+                Frontend-->>Admin: Display error - Invalid date range. End date must be after start date
                 Admin->>Frontend: Corrects date range
             end
         end
@@ -67,31 +67,31 @@ sequenceDiagram
         Frontend->>Frontend: Store filter parameters
     end
 
-    Admin->>Frontend: 4. Clicks "Export Report" button
+    Admin->>Frontend: 4. Clicks Export Report button
     
     Frontend->>Frontend: 5. Validate export parameters
     
     alt Missing required parameters
         rect rgb(255, 240, 240)
             Note over Frontend,Admin: ALTERNATIVE FLOW A2: Missing Parameters
-            Frontend-->>Admin: ❌ Display error: "Please select report typeand date range"
+            Frontend-->>Admin: Display error - Please select report type and date range
             Note over Admin,Frontend: Admin must complete selection
         end
     else Valid parameters
         alt With filters applied
-            Frontend->>Backend: 6. POST /api/exportReport{type, start_date, end_date, filters}
+            Frontend->>Backend: 6. POST /api/exportReport with filters
         else Without filters
-            Frontend->>Backend: 6. POST /api/exportReport{type, start_date, end_date}
+            Frontend->>Backend: 6. POST /api/exportReport
         end
         
         alt Database connection error
             rect rgb(255, 235, 235)
                 Note over Backend,Database: ALTERNATIVE FLOW A3: Database Error
                 Backend->>Database: Query report data
-                Database-->>Backend: ❌ Connection/Query error
-                Backend-->>Frontend: ❌ Return error {error: "Database error",status: 500}
-                Frontend-->>Admin: ❌ Display error: "Export failed.Please try again"
-                Admin->>Frontend: Clicks "Export Report" again (retry)
+                Database-->>Backend: Connection/Query error
+                Backend-->>Frontend: Return error - Database error (status 500)
+                Frontend-->>Admin: Display error - Export failed. Please try again
+                Admin->>Frontend: Clicks Export Report again (retry)
                 Note over Admin,Frontend: Admin can retry export
             end
         else Database query successful
@@ -99,13 +99,13 @@ sequenceDiagram
             
             Note over Backend,Database: Generating Report Data
             alt Sales Report
-                Backend->>Database: SELECT sales dataJOIN products, customersWHERE date BETWEEN ? AND ?
+                Backend->>Database: SELECT sales data JOIN products, customers WHERE date BETWEEN ? AND ?
             else Inventory Report
-                Backend->>Database: SELECT inventory dataJOIN categories, suppliersWHERE conditions
+                Backend->>Database: SELECT inventory data JOIN categories, suppliers WHERE conditions
             else Orders Report
-                Backend->>Database: SELECT orders dataJOIN customers, productsWHERE date BETWEEN ? AND ?
+                Backend->>Database: SELECT orders data JOIN customers, products WHERE date BETWEEN ? AND ?
             else Revenue Report
-                Backend->>Database: SELECT revenue dataGROUP BY periodWHERE date BETWEEN ? AND ?
+                Backend->>Database: SELECT revenue data GROUP BY period WHERE date BETWEEN ? AND ?
             end
             
             Database-->>Backend: Return report records
@@ -113,14 +113,14 @@ sequenceDiagram
             alt No data available
                 rect rgb(255, 248, 240)
                     Note over Backend,Frontend: ALTERNATIVE FLOW A1: No Report Data
-                    Database-->>Backend: ⚠️ Return empty result set
+                    Database-->>Backend: Return empty result set
                     Backend->>Backend: Check if data is empty
-                    Backend-->>Frontend: ⚠️ Return response {error: "No data",message: "No data available for selected criteria"}
-                    Frontend-->>Admin: ℹ️ Display info message:"No data available for the selected period and filters.Please try different criteria"
+                    Backend-->>Frontend: Return response - No data available for selected criteria
+                    Frontend-->>Admin: Display info - No data available for the selected period and filters. Please try different criteria
                     Note over Admin: No file is downloaded
                 end
             else Data available
-                Backend->>Backend: 7b. Process and aggregate data(calculations, summaries)
+                Backend->>Backend: 7b. Process and aggregate data (calculations, summaries)
                 Backend->>Backend: 7c. Format data for CSV export
                 
                 rect rgb(240, 248, 255)
@@ -128,13 +128,13 @@ sequenceDiagram
                     Backend->>Backend: 8a. Convert data to CSV format
                     
                     alt Sales Report CSV
-                        Backend->>Backend: Add headers: Order_ID, Date, Customer,Product, Quantity, Unit_Price, Total, Status
+                        Backend->>Backend: Add headers - Order_ID, Date, Customer, Product, Quantity, Unit_Price, Total, Status
                     else Inventory Report CSV
-                        Backend->>Backend: Add headers: SKU, Product_Name, Category,Quantity, Unit_Price, Supplier, Last_Update
+                        Backend->>Backend: Add headers - SKU, Product_Name, Category, Quantity, Unit_Price, Supplier, Last_Update
                     else Orders Report CSV
-                        Backend->>Backend: Add headers: Order_ID, Date, Customer,Total_Amount, Status, Payment_Method
+                        Backend->>Backend: Add headers - Order_ID, Date, Customer, Total_Amount, Status, Payment_Method
                     else Revenue Report CSV
-                        Backend->>Backend: Add headers: Period, Total_Sales,Total_Orders, Average_Order_Value, Revenue
+                        Backend->>Backend: Add headers - Period, Total_Sales, Total_Orders, Average_Order_Value, Revenue
                     end
                     
                     Backend->>Backend: 8b. Format data rows
@@ -145,9 +145,9 @@ sequenceDiagram
                 alt CSV generation error
                     rect rgb(255, 235, 235)
                         Note over Backend,Frontend: ALTERNATIVE FLOW A3: CSV Generation Error
-                        Backend->>Backend: ❌ Attempt to generate CSV fails
-                        Backend-->>Frontend: ❌ Return error {error: "Export failed",status: 500}
-                        Frontend-->>Admin: ❌ Display error: "Failed to generate report.Please try again"
+                        Backend->>Backend: Attempt to generate CSV fails
+                        Backend-->>Frontend: Return error - Export failed (status 500)
+                        Frontend-->>Admin: Display error - Failed to generate report. Please try again
                         Note over Admin,Frontend: Admin can retry
                     end
                 else CSV generated successfully
@@ -156,19 +156,19 @@ sequenceDiagram
                     Frontend->>Frontend: 10. Trigger file download
                     
                     alt Sales Report
-                        Frontend-->>Admin: 📥 Browser downloads"sales_report_YYYY-MM-DD_to_YYYY-MM-DD.csv"
+                        Frontend-->>Admin: Browser downloads sales_report_YYYY-MM-DD_to_YYYY-MM-DD.csv
                     else Inventory Report
-                        Frontend-->>Admin: 📥 Browser downloads"inventory_report_YYYY-MM-DD.csv"
+                        Frontend-->>Admin: Browser downloads inventory_report_YYYY-MM-DD.csv
                     else Orders Report
-                        Frontend-->>Admin: 📥 Browser downloads"orders_report_YYYY-MM-DD_to_YYYY-MM-DD.csv"
+                        Frontend-->>Admin: Browser downloads orders_report_YYYY-MM-DD_to_YYYY-MM-DD.csv
                     else Revenue Report
-                        Frontend-->>Admin: 📥 Browser downloads"revenue_report_YYYY-MM-DD_to_YYYY-MM-DD.csv"
+                        Frontend-->>Admin: Browser downloads revenue_report_YYYY-MM-DD_to_YYYY-MM-DD.csv
                     end
                     
-                    Frontend-->>Admin: ✅ Display success message:"Report exported successfully"
+                    Frontend-->>Admin: Display success message - Report exported successfully
                     
                     Admin->>Admin: 11. Opens CSV file in Excel/Sheets
-                    Admin->>Admin: ✅ Analyzes report data offline
+                    Admin->>Admin: Analyzes report data offline
                 end
             end
         end
