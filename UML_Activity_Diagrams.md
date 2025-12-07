@@ -1,81 +1,77 @@
 # UML Activity Diagrams - Bicycle Management System
 
-This document contains Activity Diagrams for key functionalities of the Bicycle Management System.
-
----
-
-## Activity Diagram Components
-
-| Component | Symbol | Function |
-|-----------|--------|----------|
-| Initial Node | ● (black circle) | Start |
-| Activity Node | ▭ (rounded rectangle) | An action |
-| Decision Node | ⬟ (diamond) | Branch Yes/No |
-| Flow Arrow | → | Activity flow direction |
-| Final Node | ⊙ (circle with border) | End |
-| Swimlane | Vertical column | Divide responsibility (Admin vs System) |
-| Activity Diagram Frame | Frame | Enclose entire process |
+This document contains Activity Diagrams with swimlanes (Admin vs System) for key functionalities.
 
 ---
 
 ## 1. Import Inventory by CSV File
 
 ```mermaid
-stateDiagram-v2
-    state "IMPORT INVENTORY BY CSV FILE" as frame {
-        state "Admin" as admin_col {
-            [*] --> SelectFile: ●
-            SelectFile --> UploadCSV: Select CSV file from computer
-            UploadCSV --> ClickImport: Click "Import" button
-            ClickImport --> [*]
+flowchart TB
+    subgraph "IMPORT INVENTORY BY CSV FILE"
+        subgraph Admin
+            A1((●))
+            A2[Open Inventory<br/>Management page]
+            A3[Click Import CSV button]
+            A4[Select CSV file<br/>from computer]
+            A5[Click Confirm Import]
+            A6[Display success message<br/>with import statistics]
+            A7[Display error message]
+            A8((⊙))
             
-            state DisplayResult <<choice>>
-            DisplayResult --> ShowSuccess: Success
-            DisplayResult --> ShowError: Error
-            ShowSuccess --> [*]: Display "Import successful"
-            ShowError --> [*]: Display error message
-        }
+            A1 --> A2
+            A2 --> A3
+            A3 --> A4
+            A4 --> A5
+        end
         
-        state "System" as system_col {
-            state ValidateFile <<choice>>
-            state ValidateData <<choice>>
-            state ProcessRows <<choice>>
+        subgraph System
+            S1[Receive CSV file]
+            S2[Validate file format<br/>.csv extension]
+            S3{Is file<br/>format valid?}
+            S4[Check CSV headers]
+            S5{Are headers<br/>valid?}
+            S6[Process each row]
+            S7[Validate row data<br/>SKU, quantity, price]
+            S8{Is row<br/>data valid?}
+            S9[Check if SKU exists<br/>in Database]
+            S10{Does SKU<br/>exist?}
+            S11[UPDATE inventory record]
+            S12[INSERT new record]
+            S13{More<br/>rows?}
+            S14[Return success response<br/>with success/error count]
+            S15[Return error response<br/>Invalid file format]
+            S16[Return error response<br/>Invalid headers]
+            S17[Skip row and log error]
             
-            ClickImport --> ReceiveFile: Receive CSV file
-            ReceiveFile --> ValidateFile: Validate file format
-            
-            ValidateFile --> ValidateData: Valid
-            ValidateFile --> ReturnError1: Invalid
-            ReturnError1 --> DisplayResult: Return error response
-            
-            ValidateData --> CheckHeaders: Check CSV headers
-            CheckHeaders --> ProcessRows: Headers valid
-            CheckHeaders --> ReturnError2: Headers invalid
-            ReturnError2 --> DisplayResult
-            
-            ProcessRows --> LoopRows: Loop through each row
-            LoopRows --> ValidateRow: Validate row data
-            
-            state ValidateRow <<choice>>
-            ValidateRow --> CheckSKU: Valid
-            ValidateRow --> LogError: Invalid - Skip row
-            
-            CheckSKU --> UpdateDB: SKU exists - UPDATE
-            CheckSKU --> InsertDB: SKU not exists - INSERT
-            
-            UpdateDB --> NextRow
-            InsertDB --> NextRow
-            LogError --> NextRow
-            
-            NextRow --> MoreRows: More rows?
-            
-            state MoreRows <<choice>>
-            MoreRows --> LoopRows: Yes
-            MoreRows --> ReturnSuccess: No
-            
-            ReturnSuccess --> DisplayResult: Return success response
-        }
-    }
+            S1 --> S2
+            S2 --> S3
+            S3 -->|Yes| S4
+            S3 -->|No| S15
+            S4 --> S5
+            S5 -->|Yes| S6
+            S5 -->|No| S16
+            S6 --> S7
+            S7 --> S8
+            S8 -->|Yes| S9
+            S8 -->|No| S17
+            S9 --> S10
+            S10 -->|Yes| S11
+            S10 -->|No| S12
+            S11 --> S13
+            S12 --> S13
+            S17 --> S13
+            S13 -->|Yes| S6
+            S13 -->|No| S14
+            S14 --> A6
+            S15 --> A7
+            S16 --> A7
+        end
+        
+        A5 --> S1
+        A6 --> A8
+        A7 --> A8
+    end
 ```
 
 ---
@@ -83,44 +79,56 @@ stateDiagram-v2
 ## 2. Export Inventory by CSV File
 
 ```mermaid
-stateDiagram-v2
-    state "EXPORT INVENTORY BY CSV FILE" as frame {
-        state "Admin" as admin_col {
-            [*] --> OpenPage: ●
-            OpenPage --> ApplyFilters: Open Inventory page
-            ApplyFilters --> ClickExport: Apply filters (optional)
-            ClickExport --> [*]: Click "Export CSV" button
+flowchart TB
+    subgraph "EXPORT INVENTORY BY CSV FILE"
+        subgraph Admin
+            A1((●))
+            A2[Open Inventory<br/>Management page]
+            A3[Apply filters<br/>optional]
+            A4[Click Export CSV button]
+            A5[Download CSV file]
+            A6[Display error message]
+            A7((⊙))
             
-            state DisplayResult <<choice>>
-            DisplayResult --> DownloadFile: Success
-            DisplayResult --> ShowError: Error
-            DownloadFile --> [*]: Download CSV file
-            ShowError --> [*]: Display error message
-        }
+            A1 --> A2
+            A2 --> A3
+            A3 --> A4
+        end
         
-        state "System" as system_col {
-            state CheckData <<choice>>
-            state GenerateCSV <<choice>>
+        subgraph System
+            S1[Receive export request]
+            S2[Query inventory data<br/>from Database]
+            S3{Is data<br/>available?}
+            S4[Convert data to<br/>CSV format]
+            S5[Add CSV headers<br/>SKU, Product, Quantity, etc.]
+            S6[Format data rows]
+            S7[Encode as UTF-8]
+            S8[Generate CSV file]
+            S9{CSV generation<br/>successful?}
+            S10[Return CSV file]
+            S11[Return error response<br/>No data available]
+            S12[Return error response<br/>Export failed]
             
-            ClickExport --> QueryData: Query inventory data
-            QueryData --> CheckData: Check if data exists
-            
-            CheckData --> ConvertCSV: Data exists
-            CheckData --> ReturnNoData: No data
-            ReturnNoData --> DisplayResult: Return "No data" response
-            
-            ConvertCSV --> AddHeaders: Convert data to CSV format
-            AddHeaders --> FormatRows: Add CSV headers
-            FormatRows --> EncodeUTF8: Format data rows
-            EncodeUTF8 --> GenerateCSV: Encode as UTF-8
-            
-            GenerateCSV --> ReturnFile: Success
-            GenerateCSV --> ReturnError: Error
-            
-            ReturnFile --> DisplayResult: Return CSV file
-            ReturnError --> DisplayResult: Return error response
-        }
-    }
+            S1 --> S2
+            S2 --> S3
+            S3 -->|Yes| S4
+            S3 -->|No| S11
+            S4 --> S5
+            S5 --> S6
+            S6 --> S7
+            S7 --> S8
+            S8 --> S9
+            S9 -->|Yes| S10
+            S9 -->|No| S12
+            S10 --> A5
+            S11 --> A6
+            S12 --> A6
+        end
+        
+        A4 --> S1
+        A5 --> A7
+        A6 --> A7
+    end
 ```
 
 ---
@@ -128,44 +136,54 @@ stateDiagram-v2
 ## 3. Add Category
 
 ```mermaid
-stateDiagram-v2
-    state "ADD CATEGORY" as frame {
-        state "Admin" as admin_col {
-            [*] --> OpenCategoryPage: ●
-            OpenCategoryPage --> ClickAdd: Open Category Management page
-            ClickAdd --> EnterInfo: Click "Add Category" button
-            EnterInfo --> ClickSave: Enter category information
-            ClickSave --> [*]: Click "Save" button
+flowchart TB
+    subgraph "ADD CATEGORY"
+        subgraph Admin
+            A1((●))
+            A2[Open Category<br/>Management page]
+            A3[Click Add Category button]
+            A4[Enter category information<br/>name, description, status]
+            A5[Click Save button]
+            A6[Display success message<br/>Category added successfully]
+            A7[Display error message]
+            A8((⊙))
             
-            state DisplayResult <<choice>>
-            DisplayResult --> ShowSuccess: Success
-            DisplayResult --> ShowError: Error
-            ShowSuccess --> [*]: Display "Category added successfully"
-            ShowError --> [*]: Display error message
-        }
+            A1 --> A2
+            A2 --> A3
+            A3 --> A4
+            A4 --> A5
+        end
         
-        state "System" as system_col {
-            state ValidateInput <<choice>>
-            state CheckDuplicate <<choice>>
+        subgraph System
+            S1[Receive category data]
+            S2[Validate input data<br/>required fields, format]
+            S3{Is input<br/>valid?}
+            S4[Check if category<br/>name exists in Database]
+            S5{Does name<br/>already exist?}
+            S6[INSERT new category<br/>into Database]
+            S7[Refresh category list]
+            S8[Return success response]
+            S9[Return validation error<br/>Missing required fields]
+            S10[Return duplicate error<br/>Category name exists]
             
-            ClickSave --> ReceiveData: Receive category data
-            ReceiveData --> ValidateInput: Validate input data
-            
-            ValidateInput --> CheckName: Valid
-            ValidateInput --> ReturnValidationError: Invalid
-            ReturnValidationError --> DisplayResult: Return validation error
-            
-            CheckName --> CheckDuplicate: Check if category name exists
-            
-            CheckDuplicate --> InsertCategory: Name is unique
-            CheckDuplicate --> ReturnDuplicateError: Name already exists
-            ReturnDuplicateError --> DisplayResult: Return duplicate error
-            
-            InsertCategory --> RefreshList: INSERT category into Database
-            RefreshList --> ReturnSuccess: Refresh category list
-            ReturnSuccess --> DisplayResult: Return success response
-        }
-    }
+            S1 --> S2
+            S2 --> S3
+            S3 -->|Yes| S4
+            S3 -->|No| S9
+            S4 --> S5
+            S5 -->|No| S6
+            S5 -->|Yes| S10
+            S6 --> S7
+            S7 --> S8
+            S8 --> A6
+            S9 --> A7
+            S10 --> A7
+        end
+        
+        A5 --> S1
+        A6 --> A8
+        A7 --> A8
+    end
 ```
 
 ---
@@ -173,47 +191,63 @@ stateDiagram-v2
 ## 4. Edit Category
 
 ```mermaid
-stateDiagram-v2
-    state "EDIT CATEGORY" as frame {
-        state "Admin" as admin_col {
-            [*] --> SelectCategory: ●
-            SelectCategory --> ClickEdit: Select category to edit
-            ClickEdit --> ModifyInfo: Click "Edit" button
-            ModifyInfo --> ClickUpdate: Modify category information
-            ClickUpdate --> [*]: Click "Update" button
+flowchart TB
+    subgraph "EDIT CATEGORY"
+        subgraph Admin
+            A1((●))
+            A2[Open Category<br/>Management page]
+            A3[Select category to edit]
+            A4[Click Edit button]
+            A5[Modify category information<br/>name, description, status]
+            A6[Click Update button]
+            A7[Display success message<br/>Category updated successfully]
+            A8[Display error message]
+            A9((⊙))
             
-            state DisplayResult <<choice>>
-            DisplayResult --> ShowSuccess: Success
-            DisplayResult --> ShowError: Error
-            ShowSuccess --> [*]: Display "Category updated successfully"
-            ShowError --> [*]: Display error message
-        }
+            A1 --> A2
+            A2 --> A3
+            A3 --> A4
+            A4 --> A5
+            A5 --> A6
+        end
         
-        state "System" as system_col {
-            state ValidateInput <<choice>>
-            state CheckDuplicate <<choice>>
-            state CheckExists <<choice>>
+        subgraph System
+            S1[Receive updated<br/>category data]
+            S2[Validate input data<br/>required fields, format]
+            S3{Is input<br/>valid?}
+            S4[Check if category<br/>exists in Database]
+            S5{Does category<br/>exist?}
+            S6[Check if name exists<br/>excluding current category]
+            S7{Does name<br/>already exist?}
+            S8[UPDATE category<br/>in Database]
+            S9[Refresh category list]
+            S10[Return success response]
+            S11[Return validation error]
+            S12[Return not found error<br/>Category not found]
+            S13[Return duplicate error<br/>Category name exists]
             
-            ClickUpdate --> ReceiveData: Receive updated category data
-            ReceiveData --> ValidateInput: Validate input data
-            
-            ValidateInput --> CheckExists: Valid
-            ValidateInput --> ReturnValidationError: Invalid
-            ReturnValidationError --> DisplayResult: Return validation error
-            
-            CheckExists --> CheckDuplicate: Category exists
-            CheckExists --> ReturnNotFound: Category not found
-            ReturnNotFound --> DisplayResult: Return not found error
-            
-            CheckDuplicate --> UpdateCategory: Name is unique or unchanged
-            CheckDuplicate --> ReturnDuplicateError: Name already exists
-            ReturnDuplicateError --> DisplayResult: Return duplicate error
-            
-            UpdateCategory --> RefreshList: UPDATE category in Database
-            RefreshList --> ReturnSuccess: Refresh category list
-            ReturnSuccess --> DisplayResult: Return success response
-        }
-    }
+            S1 --> S2
+            S2 --> S3
+            S3 -->|Yes| S4
+            S3 -->|No| S11
+            S4 --> S5
+            S5 -->|Yes| S6
+            S5 -->|No| S12
+            S6 --> S7
+            S7 -->|No| S8
+            S7 -->|Yes| S13
+            S8 --> S9
+            S9 --> S10
+            S10 --> A7
+            S11 --> A8
+            S12 --> A8
+            S13 --> A8
+        end
+        
+        A6 --> S1
+        A7 --> A9
+        A8 --> A9
+    end
 ```
 
 ---
@@ -221,47 +255,57 @@ stateDiagram-v2
 ## 5. Delete Category
 
 ```mermaid
-stateDiagram-v2
-    state "DELETE CATEGORY" as frame {
-        state "Admin" as admin_col {
-            [*] --> SelectCategory: ●
-            SelectCategory --> ClickDelete: Select category to delete
-            ClickDelete --> ConfirmDialog: Click "Delete" button
+flowchart TB
+    subgraph "DELETE CATEGORY"
+        subgraph Admin
+            A1((●))
+            A2[Open Category<br/>Management page]
+            A3[Select category to delete]
+            A4[Click Delete button]
+            A5[Confirm deletion<br/>in dialog]
+            A6{Confirm?}
+            A7[Display success message<br/>Category deleted successfully]
+            A8[Display error/warning message]
+            A9((⊙))
             
-            state ConfirmDialog <<choice>>
-            ConfirmDialog --> ClickConfirm: Confirm
-            ConfirmDialog --> [*]: Cancel
-            
-            ClickConfirm --> [*]: Click "Confirm" button
-            
-            state DisplayResult <<choice>>
-            DisplayResult --> ShowSuccess: Success
-            DisplayResult --> ShowError: Error/Warning
-            ShowSuccess --> [*]: Display "Category deleted successfully"
-            ShowError --> [*]: Display error/warning message
-        }
+            A1 --> A2
+            A2 --> A3
+            A3 --> A4
+            A4 --> A5
+            A5 --> A6
+            A6 -->|No| A9
+        end
         
-        state "System" as system_col {
-            state CheckExists <<choice>>
-            state CheckInUse <<choice>>
+        subgraph System
+            S1[Receive delete request]
+            S2[Check if category<br/>exists in Database]
+            S3{Does category<br/>exist?}
+            S4[Check if category<br/>has associated products]
+            S5{Has<br/>products?}
+            S6[DELETE category<br/>from Database]
+            S7[Refresh category list]
+            S8[Return success response]
+            S9[Return not found error<br/>Category not found]
+            S10[Return in-use error<br/>Category has products]
             
-            ClickConfirm --> CheckExists: Check if category exists
-            
-            CheckExists --> CheckInUse: Category exists
-            CheckExists --> ReturnNotFound: Category not found
-            ReturnNotFound --> DisplayResult: Return not found error
-            
-            CheckInUse --> CheckProducts: Check if category has products
-            
-            CheckProducts --> DeleteCategory: No products
-            CheckProducts --> ReturnInUseError: Has products
-            ReturnInUseError --> DisplayResult: Return "Category in use" error
-            
-            DeleteCategory --> RefreshList: DELETE category from Database
-            RefreshList --> ReturnSuccess: Refresh category list
-            ReturnSuccess --> DisplayResult: Return success response
-        }
-    }
+            S1 --> S2
+            S2 --> S3
+            S3 -->|Yes| S4
+            S3 -->|No| S9
+            S4 --> S5
+            S5 -->|No| S6
+            S5 -->|Yes| S10
+            S6 --> S7
+            S7 --> S8
+            S8 --> A7
+            S9 --> A8
+            S10 --> A8
+        end
+        
+        A6 -->|Yes| S1
+        A7 --> A9
+        A8 --> A9
+    end
 ```
 
 ---
@@ -269,135 +313,119 @@ stateDiagram-v2
 ## 6. Export Report by CSV
 
 ```mermaid
-stateDiagram-v2
-    state "EXPORT REPORT BY CSV" as frame {
-        state "Admin" as admin_col {
-            [*] --> OpenReportPage: ●
-            OpenReportPage --> SelectType: Open Reports page
-            SelectType --> SelectDateRange: Select report type
-            SelectDateRange --> ApplyFilters: Select date range
-            ApplyFilters --> ClickExport: Apply filters (optional)
-            ClickExport --> [*]: Click "Export Report" button
+flowchart TB
+    subgraph "EXPORT REPORT BY CSV"
+        subgraph Admin
+            A1((●))
+            A2[Open Reports page]
+            A3[Select report type<br/>Sales, Inventory, Orders, Revenue]
+            A4[Select date range<br/>start_date, end_date]
+            A5[Apply filters<br/>optional]
+            A6[Click Export Report button]
+            A7[Download CSV report file]
+            A8[Display error message]
+            A9((⊙))
             
-            state DisplayResult <<choice>>
-            DisplayResult --> DownloadFile: Success
-            DisplayResult --> ShowError: Error
-            DownloadFile --> [*]: Download CSV report file
-            ShowError --> [*]: Display error message
-        }
+            A1 --> A2
+            A2 --> A3
+            A3 --> A4
+            A4 --> A5
+            A5 --> A6
+        end
         
-        state "System" as system_col {
-            state ValidateParams <<choice>>
-            state CheckData <<choice>>
-            state GenerateCSV <<choice>>
+        subgraph System
+            S1[Receive export request]
+            S2[Validate parameters<br/>report type, date range]
+            S3{Are parameters<br/>valid?}
+            S4[Query report data<br/>from Database]
+            S5{Is data<br/>available?}
+            S6[Process and aggregate data<br/>calculations, summaries]
+            S7[Convert to CSV format]
+            S8[Add CSV headers]
+            S9[Format data rows]
+            S10[Add summary/totals row]
+            S11[Encode as UTF-8]
+            S12[Generate CSV file]
+            S13{CSV generation<br/>successful?}
+            S14[Return CSV file]
+            S15[Return validation error<br/>Invalid parameters]
+            S16[Return no data error<br/>No data available]
+            S17[Return generation error<br/>Export failed]
             
-            ClickExport --> ValidateParams: Validate export parameters
-            
-            ValidateParams --> QueryReport: Valid
-            ValidateParams --> ReturnValidationError: Invalid
-            ReturnValidationError --> DisplayResult: Return validation error
-            
-            QueryReport --> CheckData: Query report data from Database
-            
-            CheckData --> ProcessData: Data exists
-            CheckData --> ReturnNoData: No data
-            ReturnNoData --> DisplayResult: Return "No data" response
-            
-            ProcessData --> AggregateData: Process and aggregate data
-            AggregateData --> ConvertCSV: Convert to CSV format
-            ConvertCSV --> AddHeaders: Add CSV headers
-            AddHeaders --> FormatRows: Format data rows
-            FormatRows --> AddSummary: Add summary row
-            AddSummary --> EncodeUTF8: Encode as UTF-8
-            EncodeUTF8 --> GenerateCSV: Generate CSV file
-            
-            GenerateCSV --> ReturnFile: Success
-            GenerateCSV --> ReturnError: Error
-            
-            ReturnFile --> DisplayResult: Return CSV file
-            ReturnError --> DisplayResult: Return error response
-        }
-    }
+            S1 --> S2
+            S2 --> S3
+            S3 -->|Yes| S4
+            S3 -->|No| S15
+            S4 --> S5
+            S5 -->|Yes| S6
+            S5 -->|No| S16
+            S6 --> S7
+            S7 --> S8
+            S8 --> S9
+            S9 --> S10
+            S10 --> S11
+            S11 --> S12
+            S12 --> S13
+            S13 -->|Yes| S14
+            S13 -->|No| S17
+            S14 --> A7
+            S15 --> A8
+            S16 --> A8
+            S17 --> A8
+        end
+        
+        A6 --> S1
+        A7 --> A9
+        A8 --> A9
+    end
 ```
+
+---
+
+## Diagram Legend
+
+| Symbol | Meaning | Description |
+|--------|---------|-------------|
+| ● | Initial Node | Start point of the activity |
+| ⊙ | Final Node | End point of the activity |
+| ▭ | Activity Node | An action or process step |
+| ⬟ | Decision Node | Branch point with conditions |
+| → | Flow Arrow | Direction of activity flow |
+| \|\| | Swimlane | Separates Admin and System responsibilities |
 
 ---
 
 ## Notes
 
 ### Swimlane Structure
-- **Admin Column**: Contains all user actions and interactions
-- **System Column**: Contains all backend processing and database operations
+- **Admin Swimlane**: Contains all user interactions and UI actions
+- **System Swimlane**: Contains all backend processing, validation, and database operations
 
 ### Decision Nodes
-- Represented by `<<choice>>` state type in Mermaid
-- Branch based on conditions (Valid/Invalid, Success/Error, Yes/No)
+- Diamond shapes represent decision points
+- Each decision has clear Yes/No or condition-based branches
+- All paths eventually lead to a final node
 
-### Flow Direction
-- Flows from top to bottom
-- Crosses between Admin and System swimlanes when interaction occurs
-- Returns to Admin column for final display/feedback
+### Flow Characteristics
+- Flows from top to bottom for clarity
+- Crosses between swimlanes show interaction between Admin and System
+- Each diagram starts with Initial Node (●) in Admin swimlane
+- Each diagram ends with Final Node (⊙) in Admin swimlane
 
 ### Activity Nodes
-- Rounded rectangles represent actions/activities
-- Clear, concise descriptions of each step
-- Grouped logically within respective swimlanes
-
-### Initial and Final Nodes
-- `[*]` represents both initial (●) and final (⊙) nodes
-- Each diagram starts with initial node in Admin column
-- Each diagram ends with final node in Admin column after displaying result
-
----
-
-## Diagram Legend
-
-| Symbol | Meaning |
-|--------|---------|
-| ● | Initial Node (Start) |
-| ▭ | Activity Node (Action) |
-| ⬟ | Decision Node (Choice) |
-| → | Flow Arrow (Direction) |
-| ⊙ | Final Node (End) |
-| \|\| | Swimlane Separator (Admin \| System) |
+- Rounded rectangles represent actions
+- Clear, concise descriptions
+- Multi-line text for detailed steps
 
 ---
 
 ## Process Summary
 
-### Import Inventory by CSV
-1. Admin selects and uploads CSV file
-2. System validates file format and headers
-3. System processes each row (validate, update/insert)
-4. System returns result with success/error count
-5. Admin sees success message or error details
-
-### Export Inventory by CSV
-1. Admin opens page and applies filters
-2. Admin clicks export button
-3. System queries and validates data
-4. System generates CSV file
-5. Admin downloads file or sees error message
-
-### Add Category
-1. Admin enters new category information
-2. System validates input and checks for duplicates
-3. System inserts category into database
-4. Admin sees success or error message
-
-### Edit Category
-1. Admin modifies existing category information
-2. System validates input and checks for duplicates
-3. System updates category in database
-4. Admin sees success or error message
-
-### Delete Category
-1. Admin selects category and confirms deletion
-2. System checks if category is in use
-3. System deletes category if not in use
-4. Admin sees success or warning message
-
-### Export Report by CSV
-1. Admin selects report type, date range, and filters
-2. System validates parameters and queries data
-3. System processes, aggregates, and converts to CSV
-4. Admin downloads report file or sees error message
+| Process | Admin Actions | System Actions | Result |
+|---------|---------------|----------------|--------|
+| **Import Inventory CSV** | Select file → Upload → Confirm | Validate → Process rows → Update/Insert DB | Success message with statistics or error |
+| **Export Inventory CSV** | Apply filters → Click Export | Query data → Generate CSV | Download file or error message |
+| **Add Category** | Enter info → Click Save | Validate → Check duplicate → Insert DB | Success or error message |
+| **Edit Category** | Select → Modify → Click Update | Validate → Check duplicate → Update DB | Success or error message |
+| **Delete Category** | Select → Click Delete → Confirm | Check exists → Check in-use → Delete DB | Success or warning message |
+| **Export Report CSV** | Select type → Date range → Filters → Export | Validate → Query → Process → Generate CSV | Download report or error message |
