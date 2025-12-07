@@ -1,394 +1,315 @@
-# UML Activity Diagrams - Bicycle Management System
+# UML Activity Diagrams
 
-This document contains Activity Diagrams with swimlanes for key functionalities.
+This document contains Activity Diagrams for the project's key functionalities, formatted with Admin and System swimlanes.
 
 ---
 
-## 1. IMPORT INVENTORY BY CSV FILE
+## 1. Import Inventory by CSV
 
 ```mermaid
-graph TB
-    subgraph " "
+flowchart TB
+    %% Definitions
+    classDef startNode fill:#000,stroke:#000,stroke-width:2px,color:#fff;
+    classDef endNode fill:#000,stroke:#f00,stroke-width:2px,color:#fff;
+    classDef actionNode fill:#fff,stroke:#000,stroke-width:1px,rx:5,ry:5;
+    classDef decisionNode fill:#fff,stroke:#000,stroke-width:1px,shape:diamond;
+
+    subgraph "IMPORT INVENTORY BY CSV"
+        direction TB
+        
         subgraph Admin
-            A_start((●))
-            A1[Open Inventory<br/>Management page]
-            A2[Click Import CSV button]
-            A3[Select CSV file<br/>from computer]
-            A4[Click Confirm Import]
-            A_msg[Display message]
-            A_end((⊙))
-            
-            A_start --> A1
+            direction TB
+            Start1(( )):::startNode
+            A1[Select CSV File]:::actionNode
+            A2[Click "Import Inventory"]:::actionNode
+            A3[Display Result Message]:::actionNode
+            End1(( )):::endNode
+
+            Start1 --> A1
             A1 --> A2
-            A2 --> A3
-            A3 --> A4
-            A_msg --> A_end
         end
-        
+
         subgraph System
-            S1[Receive CSV file<br/>from Frontend]
-            S2[Validate file format]
-            S3{Is file<br/>format valid?}
-            S4[Check CSV headers]
-            S5{Are headers<br/>valid?}
-            S6[Process each row<br/>in CSV file]
-            S7[Validate row data]
-            S8{Is data<br/>valid?}
-            S9[Check if SKU exists<br/>in Database]
-            S10{Does SKU<br/>exist?}
-            S11[UPDATE inventory<br/>record in Database]
-            S12[INSERT new inventory<br/>record in Database]
-            S13{More<br/>rows?}
-            S14[Return success response<br/>to Frontend]
-            S15[Return validation<br/>error response]
-            S16[Skip row and<br/>log error]
-            
-            S1 --> S2
-            S2 --> S3
-            S3 -->|No| S15
-            S3 -->|Yes| S4
-            S4 --> S5
-            S5 -->|No| S15
-            S5 -->|Yes| S6
-            S6 --> S7
-            S7 --> S8
-            S8 -->|No| S16
-            S8 -->|Yes| S9
-            S9 --> S10
-            S10 -->|Yes| S11
-            S10 -->|No| S12
-            S11 --> S13
-            S12 --> S13
-            S16 --> S13
-            S13 -->|Yes| S6
-            S13 -->|No| S14
-            S14 --> A_msg
-            S15 --> A_msg
+            direction TB
+            S1[Validate File Format]:::actionNode
+            D1{Is Valid?}:::decisionNode
+            S2[Parse & Validate Data]:::actionNode
+            D2{Data Valid?}:::decisionNode
+            S3[Update/Insert Inventory]:::actionNode
+            S4[Return Success Response]:::actionNode
+            S5[Return Error Response]:::actionNode
+
+            A2 --> S1
+            S1 --> D1
+            D1 -- No --> S5
+            D1 -- Yes --> S2
+            S2 --> D2
+            D2 -- No --> S5
+            D2 -- Yes --> S3
+            S3 --> S4
+            S4 --> A3
+            S5 --> A3
         end
         
-        A4 --> S1
+        A3 --> End1
     end
 ```
 
 ---
 
-## 2. EXPORT INVENTORY BY CSV FILE
+## 2. Export Inventory by CSV
 
 ```mermaid
-graph TB
-    subgraph " "
+flowchart TB
+    %% Definitions
+    classDef startNode fill:#000,stroke:#000,stroke-width:2px,color:#fff;
+    classDef endNode fill:#000,stroke:#f00,stroke-width:2px,color:#fff;
+    classDef actionNode fill:#fff,stroke:#000,stroke-width:1px,rx:5,ry:5;
+    classDef decisionNode fill:#fff,stroke:#000,stroke-width:1px,shape:diamond;
+
+    subgraph "EXPORT INVENTORY BY CSV"
+        direction TB
+
         subgraph Admin
-            A_start((●))
-            A1[Open Inventory<br/>Management page]
-            A2[Apply filters<br/>optional]
-            A3[Click Export CSV button]
-            A_msg[Display message or<br/>download file]
-            A_end((⊙))
-            
-            A_start --> A1
-            A1 --> A2
-            A2 --> A3
-            A_msg --> A_end
+            direction TB
+            Start2(( )):::startNode
+            A2_1[Filter Inventory List]:::actionNode
+            A2_2[Click "Export CSV"]:::actionNode
+            A2_3[Download CSV File]:::actionNode
+            End2(( )):::endNode
+
+            Start2 --> A2_1
+            A2_1 --> A2_2
         end
-        
+
         subgraph System
-            S1[Receive export request<br/>from Frontend]
-            S2[Query inventory data<br/>from Database]
-            S3{Is data<br/>available?}
-            S4[Convert data to<br/>CSV format]
-            S5[Add CSV headers]
-            S6[Format data rows]
-            S7[Encode as UTF-8]
-            S8[Return CSV file<br/>to Frontend]
-            S9[Return no data<br/>error response]
-            
-            S1 --> S2
-            S2 --> S3
-            S3 -->|No| S9
-            S3 -->|Yes| S4
-            S4 --> S5
-            S5 --> S6
-            S6 --> S7
-            S7 --> S8
-            S8 --> A_msg
-            S9 --> A_msg
+            direction TB
+            S2_1[Query Inventory Data]:::actionNode
+            D2_1{Data Exists?}:::decisionNode
+            S2_2[Generate CSV Content]:::actionNode
+            S2_3[Return CSV File]:::actionNode
+            S2_4[Return No Data Error]:::actionNode
+
+            A2_2 --> S2_1
+            S2_1 --> D2_1
+            D2_1 -- No --> S2_4
+            D2_1 -- Yes --> S2_2
+            S2_2 --> S2_3
+            S2_3 --> A2_3
+            S2_4 --> A2_3
         end
         
-        A3 --> S1
+        A2_3 --> End2
     end
 ```
 
 ---
 
-## 3. ADD CATEGORY
+## 3. Add Category
 
 ```mermaid
-graph TB
-    subgraph " "
+flowchart TB
+    %% Definitions
+    classDef startNode fill:#000,stroke:#000,stroke-width:2px,color:#fff;
+    classDef endNode fill:#000,stroke:#f00,stroke-width:2px,color:#fff;
+    classDef actionNode fill:#fff,stroke:#000,stroke-width:1px,rx:5,ry:5;
+    classDef decisionNode fill:#fff,stroke:#000,stroke-width:1px,shape:diamond;
+
+    subgraph "ADD CATEGORY"
+        direction TB
+
         subgraph Admin
-            A_start((●))
-            A1[Open Category<br/>Management page]
-            A2[Click Add Category button]
-            A3[Enter category information<br/>name, description, status]
-            A4[Click Save button]
-            A_msg[Display message]
-            A_end((⊙))
-            
-            A_start --> A1
-            A1 --> A2
-            A2 --> A3
-            A3 --> A4
-            A_msg --> A_end
+            direction TB
+            Start3(( )):::startNode
+            A3_1[Enter Category Info]:::actionNode
+            A3_2[Click "Add Category"]:::actionNode
+            A3_3[Display Success/Error]:::actionNode
+            End3(( )):::endNode
+
+            Start3 --> A3_1
+            A3_1 --> A3_2
         end
-        
+
         subgraph System
-            S1[Receive category data<br/>from Frontend]
-            S2[Validate input data]
-            S3{Is data<br/>valid?}
-            S4[Check if category<br/>name exists in Database]
-            S5{Does name<br/>already exist?}
-            S6[INSERT new category<br/>into Database]
-            S7[Return success<br/>response to Frontend]
-            S8[Return validation<br/>error response]
-            S9[Return duplicate<br/>error response]
-            
-            S1 --> S2
-            S2 --> S3
-            S3 -->|No| S8
-            S3 -->|Yes| S4
-            S4 --> S5
-            S5 -->|Yes| S9
-            S5 -->|No| S6
-            S6 --> S7
-            S7 --> A_msg
-            S8 --> A_msg
-            S9 --> A_msg
+            direction TB
+            S3_1[Validate Input]:::actionNode
+            D3_1{Valid?}:::decisionNode
+            S3_2[Check Duplicate Name]:::actionNode
+            D3_2{Duplicate?}:::decisionNode
+            S3_3[Insert Into Database]:::actionNode
+            S3_4[Return Success]:::actionNode
+            S3_5[Return Error Details]:::actionNode
+
+            A3_2 --> S3_1
+            S3_1 --> D3_1
+            D3_1 -- No --> S3_5
+            D3_1 -- Yes --> S3_2
+            S3_2 --> D3_2
+            D3_2 -- Yes --> S3_5
+            D3_2 -- No --> S3_3
+            S3_3 --> S3_4
+            S3_4 --> A3_3
+            S3_5 --> A3_3
         end
         
-        A4 --> S1
+        A3_3 --> End3
     end
 ```
 
 ---
 
-## 4. EDIT CATEGORY
+## 4. Edit Category
 
 ```mermaid
-graph TB
-    subgraph " "
+flowchart TB
+    %% Definitions
+    classDef startNode fill:#000,stroke:#000,stroke-width:2px,color:#fff;
+    classDef endNode fill:#000,stroke:#f00,stroke-width:2px,color:#fff;
+    classDef actionNode fill:#fff,stroke:#000,stroke-width:1px,rx:5,ry:5;
+    classDef decisionNode fill:#fff,stroke:#000,stroke-width:1px,shape:diamond;
+
+    subgraph "EDIT CATEGORY"
+        direction TB
+
         subgraph Admin
-            A_start((●))
-            A1[Open Category<br/>Management page]
-            A2[Select category to edit]
-            A3[Click Edit button]
-            A4[Modify category information<br/>name, description, status]
-            A5[Click Update button]
-            A_msg[Display message]
-            A_end((⊙))
-            
-            A_start --> A1
-            A1 --> A2
-            A2 --> A3
-            A3 --> A4
-            A4 --> A5
-            A_msg --> A_end
+            direction TB
+            Start4(( )):::startNode
+            A4_1[Select Category]:::actionNode
+            A4_2[Update Info]:::actionNode
+            A4_3[Click "Update"]:::actionNode
+            A4_4[Display Result]:::actionNode
+            End4(( )):::endNode
+
+            Start4 --> A4_1
+            A4_1 --> A4_2
+            A4_2 --> A4_3
         end
-        
+
         subgraph System
-            S1[Receive updated<br/>category data from Frontend]
-            S2[Validate input data]
-            S3{Is data<br/>valid?}
-            S4[Check if category<br/>exists in Database]
-            S5{Does category<br/>exist?}
-            S6[Check if new name exists<br/>excluding current category]
-            S7{Does name<br/>already exist?}
-            S8[UPDATE category<br/>in Database]
-            S9[Return success<br/>response to Frontend]
-            S10[Return validation<br/>error response]
-            S11[Return not found<br/>error response]
-            S12[Return duplicate<br/>error response]
-            
-            S1 --> S2
-            S2 --> S3
-            S3 -->|No| S10
-            S3 -->|Yes| S4
-            S4 --> S5
-            S5 -->|No| S11
-            S5 -->|Yes| S6
-            S6 --> S7
-            S7 -->|Yes| S12
-            S7 -->|No| S8
-            S8 --> S9
-            S9 --> A_msg
-            S10 --> A_msg
-            S11 --> A_msg
-            S12 --> A_msg
+            direction TB
+            S4_1[Validate Input]:::actionNode
+            D4_1{Valid?}:::decisionNode
+            S4_2[Check Existence]:::actionNode
+            D4_2{Exists?}:::decisionNode
+            S4_3[Update Database]:::actionNode
+            S4_4[Return Success]:::actionNode
+            S4_5[Return Error]:::actionNode
+
+            A4_3 --> S4_1
+            S4_1 --> D4_1
+            D4_1 -- No --> S4_5
+            D4_1 -- Yes --> S4_2
+            S4_2 --> D4_2
+            D4_2 -- No --> S4_5
+            D4_2 -- Yes --> S4_3
+            S4_3 --> S4_4
+            S4_4 --> A4_4
+            S4_5 --> A4_4
         end
         
-        A5 --> S1
+        A4_4 --> End4
     end
 ```
 
 ---
 
-## 5. DELETE CATEGORY
+## 5. Delete Category
 
 ```mermaid
-graph TB
-    subgraph " "
+flowchart TB
+    %% Definitions
+    classDef startNode fill:#000,stroke:#000,stroke-width:2px,color:#fff;
+    classDef endNode fill:#000,stroke:#f00,stroke-width:2px,color:#fff;
+    classDef actionNode fill:#fff,stroke:#000,stroke-width:1px,rx:5,ry:5;
+    classDef decisionNode fill:#fff,stroke:#000,stroke-width:1px,shape:diamond;
+
+    subgraph "DELETE CATEGORY"
+        direction TB
+
         subgraph Admin
-            A_start((●))
-            A1[Open Category<br/>Management page]
-            A2[Select category to delete]
-            A3[Click Delete button]
-            A4{Confirm<br/>deletion?}
-            A_msg[Display message]
-            A_end((⊙))
-            
-            A_start --> A1
-            A1 --> A2
-            A2 --> A3
-            A3 --> A4
-            A4 -->|No| A_end
-            A_msg --> A_end
+            direction TB
+            Start5(( )):::startNode
+            A5_1[Select Category]:::actionNode
+            A5_2[Click "Delete"]:::actionNode
+            A5_3[Display Result]:::actionNode
+            End5(( )):::endNode
+
+            Start5 --> A5_1
+            A5_1 --> A5_2
         end
-        
+
         subgraph System
-            S1[Receive delete request<br/>from Frontend]
-            S2[Check if category<br/>exists in Database]
-            S3{Does category<br/>exist?}
-            S4[Check if category<br/>has associated products]
-            S5{Has<br/>products?}
-            S6[DELETE category<br/>from Database]
-            S7[Return success<br/>response to Frontend]
-            S8[Return not found<br/>error response]
-            S9[Return in-use<br/>error response]
-            
-            S1 --> S2
-            S2 --> S3
-            S3 -->|No| S8
-            S3 -->|Yes| S4
-            S4 --> S5
-            S5 -->|Yes| S9
-            S5 -->|No| S6
-            S6 --> S7
-            S7 --> A_msg
-            S8 --> A_msg
-            S9 --> A_msg
+            direction TB
+            S5_1[Check Usage]:::actionNode
+            D5_1{In Use?}:::decisionNode
+            S5_2[Delete from DB]:::actionNode
+            S5_3[Return Success]:::actionNode
+            S5_4[Return Error]:::actionNode
+
+            A5_2 --> S5_1
+            S5_1 --> D5_1
+            D5_1 -- Yes --> S5_4
+            D5_1 -- No --> S5_2
+            S5_2 --> S5_3
+            S5_3 --> A5_3
+            S5_4 --> A5_3
         end
         
-        A4 -->|Yes| S1
+        A5_3 --> End5
     end
 ```
 
 ---
 
-## 6. EXPORT REPORT BY CSV
+## 6. Export Report by CSV
 
 ```mermaid
-graph TB
-    subgraph " "
+flowchart TB
+    %% Definitions
+    classDef startNode fill:#000,stroke:#000,stroke-width:2px,color:#fff;
+    classDef endNode fill:#000,stroke:#f00,stroke-width:2px,color:#fff;
+    classDef actionNode fill:#fff,stroke:#000,stroke-width:1px,rx:5,ry:5;
+    classDef decisionNode fill:#fff,stroke:#000,stroke-width:1px,shape:diamond;
+
+    subgraph "EXPORT REPORT BY CSV"
+        direction TB
+
         subgraph Admin
-            A_start((●))
-            A1[Open Reports page]
-            A2[Select report type<br/>Sales, Inventory, Orders, Revenue]
-            A3[Select date range<br/>start date, end date]
-            A4[Apply filters<br/>optional]
-            A5[Click Export Report button]
-            A_msg[Display message or<br/>download file]
-            A_end((⊙))
-            
-            A_start --> A1
-            A1 --> A2
-            A2 --> A3
-            A3 --> A4
-            A4 --> A5
-            A_msg --> A_end
+            direction TB
+            Start6(( )):::startNode
+            A6_1[Select Report Type]:::actionNode
+            A6_2[Select Date Range]:::actionNode
+            A6_3[Click "Export Report"]:::actionNode
+            A6_4[Download CSV]:::actionNode
+            End6(( )):::endNode
+
+            Start6 --> A6_1
+            A6_1 --> A6_2
+            A6_2 --> A6_3
         end
-        
+
         subgraph System
-            S1[Receive export request<br/>from Frontend]
-            S2[Validate parameters<br/>report type, date range]
-            S3{Are parameters<br/>valid?}
-            S4[Query report data<br/>from Database]
-            S5{Is data<br/>available?}
-            S6[Process and<br/>aggregate data]
-            S7[Convert to CSV format]
-            S8[Add CSV headers]
-            S9[Format data rows]
-            S10[Add summary row]
-            S11[Encode as UTF-8]
-            S12[Return CSV file<br/>to Frontend]
-            S13[Return validation<br/>error response]
-            S14[Return no data<br/>error response]
-            
-            S1 --> S2
-            S2 --> S3
-            S3 -->|No| S13
-            S3 -->|Yes| S4
-            S4 --> S5
-            S5 -->|No| S14
-            S5 -->|Yes| S6
-            S6 --> S7
-            S7 --> S8
-            S8 --> S9
-            S9 --> S10
-            S10 --> S11
-            S11 --> S12
-            S12 --> A_msg
-            S13 --> A_msg
-            S14 --> A_msg
+            direction TB
+            S6_1[Validate Parameters]:::actionNode
+            D6_1{Valid?}:::decisionNode
+            S6_2[Query Report Data]:::actionNode
+            D6_2{Data Found?}:::decisionNode
+            S6_3[Generate CSV]:::actionNode
+            S6_4[Return CSV File]:::actionNode
+            S6_5[Return Error]:::actionNode
+
+            A6_3 --> S6_1
+            S6_1 --> D6_1
+            D6_1 -- No --> S6_5
+            D6_1 -- Yes --> S6_2
+            S6_2 --> D6_2
+            D6_2 -- No --> S6_5
+            D6_2 -- Yes --> S6_3
+            S6_3 --> S6_4
+            S6_4 --> A6_4
+            S6_5 --> A6_4
         end
         
-        A5 --> S1
+        A6_4 --> End6
     end
 ```
-
----
-
-## Diagram Legend
-
-| Symbol | Meaning | Description |
-|--------|---------|-------------|
-| ● | Initial Node | Start point (black filled circle) |
-| ⊙ | Final Node | End point (circle with border) |
-| ▭ | Activity Node | Action or process step (rounded rectangle) |
-| ⬟ | Decision Node | Branch point with conditions (diamond) |
-| → | Flow Arrow | Direction of activity flow |
-
----
-
-## Notes
-
-### Swimlane Structure
-- **Admin Column (Left)**: Contains all user interactions and UI actions
-- **System Column (Right)**: Contains all backend processing, validation, and database operations
-
-### Flow Characteristics
-- Each diagram has a clear title at the top
-- Flows from top to bottom within each swimlane
-- Arrows cross between swimlanes to show interaction
-- All paths eventually lead to a final node (⊙)
-
-### Decision Nodes
-- Diamond shapes represent decision points
-- Each decision has Yes/No branches clearly labeled
-- Conditions are stated as questions
-
-### Activity Nodes
-- Rounded rectangles for all actions
-- Multi-line text for detailed descriptions
-- Clear, concise action descriptions
-
----
-
-## Process Summary
-
-| Process | Key Steps | Decision Points | End Result |
-|---------|-----------|-----------------|------------|
-| **Import Inventory CSV** | Upload → Validate → Process → Update/Insert | File valid? Headers valid? Data valid? SKU exists? | Success with statistics or error message |
-| **Export Inventory CSV** | Request → Query → Convert → Generate | Data available? | Download CSV file or error message |
-| **Add Category** | Enter info → Validate → Check duplicate → Insert | Data valid? Name exists? | Success or error message |
-| **Edit Category** | Select → Modify → Validate → Check → Update | Data valid? Category exists? Name exists? | Success or error message |
-| **Delete Category** | Select → Confirm → Check → Delete | Confirm? Category exists? Has products? | Success or warning message |
-| **Export Report CSV** | Select type → Date range → Filters → Generate | Parameters valid? Data available? | Download report or error message |
