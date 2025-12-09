@@ -20,7 +20,7 @@ export default function EditOrderPage() {
         setLoading(true);
         const data = await orderService.getOrderById(orderId);
         setOrder(data);
-      } catch (error) {
+      } catch {
         setError('Không thể tải thông tin đơn hàng!');
       } finally {
         setLoading(false);
@@ -43,19 +43,13 @@ export default function EditOrderPage() {
       });
       alert('✅ Cập nhật đơn hàng thành công!');
       router.push('/orders');
-    } catch (error) {
+    } catch {
       setError('Có lỗi xảy ra khi cập nhật đơn hàng!');
     } finally {
       setSubmitting(false);
     }
   };
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('vi-VN', {
-      style: 'currency',
-      currency: 'VND'
-    }).format(amount);
-  };
 
   if (loading) {
     return (

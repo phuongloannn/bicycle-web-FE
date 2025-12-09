@@ -1,6 +1,6 @@
 // src/contexts/CartContext.tsx
 'use client';
-import { createContext, useContext, useReducer, ReactNode, useEffect, useCallback } from 'react';
+import { createContext, useContext, useReducer, ReactNode, useEffect } from 'react';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3000';
 
@@ -285,7 +285,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
             (item as Product).image_url || 
             (item as Product).imageUrl || 
             (item as Product).image ||
-            (item as Accessory).image_url
+            ((item as Accessory).image_url ?? undefined)
           ),
           stock: availableStock,
           itemType: itemType // 🔥 STORE ITEM TYPE
@@ -657,7 +657,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
       // ✅ 4. XỬ LÝ THANH TOÁN NẾU KHÔNG PHẢI COD
       let requiresPaymentRedirect = false;
-let paymentResult = null;
 
 if (customerInfo.paymentMethod && customerInfo.paymentMethod !== 'COD') {
   console.log('💳 Payment required for order:', createdOrder.id);

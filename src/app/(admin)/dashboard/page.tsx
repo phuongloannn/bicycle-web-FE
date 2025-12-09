@@ -1,14 +1,10 @@
 'use client';
-import { getServerToken } from '@/lib/auth.server';
-import { redirect } from 'next/navigation';
 import CustomerTable from '@/app/(admin)/customers/CustomerTable';
 import ComponentCard from '@/components/common/ComponentCard';
 import PageBreadcrumb from '@/components/common/PageBreadCrumb';
 import { useRouter } from 'next/navigation';
 
-export default async function CustomersPage() {
-  // const token = await getServerToken();
-  // if (!token) redirect('/signin');
+export default function DashboardPage() {
   const router = useRouter();
   return (
     <section className="p-6 space-y-6">

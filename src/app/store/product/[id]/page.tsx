@@ -33,7 +33,6 @@ export default function ProductDetailPage() {
   const [specLoading, setSpecLoading] = useState(true);
   const [quantity, setQuantity] = useState(1);
   const [imageStatus, setImageStatus] = useState<'loading' | 'success' | 'error'>('loading');
-  const [activeImage, setActiveImage] = useState(0);
   const { addToCart } = useCart();
 
   // 🔹 HÀM LẤY URL ẢNH

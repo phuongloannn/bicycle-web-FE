@@ -28,7 +28,7 @@ export default function AlertsCard() {
           pendingOrders = activitiesRes.data?.filter((activity: any) => 
             activity.type === 'order' && activity.status === 'pending'
           ).length || 0;
-        } catch (err) {
+        } catch {
           console.log('Không thể lấy pending orders');
         }
 

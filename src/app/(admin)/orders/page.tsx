@@ -26,7 +26,7 @@ export default function OrdersPage() {
 
       {/* Order List */}
       <div className="mb-12">
-        <OrderList themeColor="purple" />
+        <OrderList />
       </div>
 
       {/* Create Order Modal */}
@@ -37,7 +37,6 @@ export default function OrdersPage() {
             // Có thể thêm reload order list ở đây
           }}
           onCancel={() => setShowCreateOrder(false)}
-          themeColor="purple"
         />
       )}
     </div>

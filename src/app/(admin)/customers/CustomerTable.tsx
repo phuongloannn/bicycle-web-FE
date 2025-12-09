@@ -29,11 +29,11 @@ export default function CustomerTable() {
     try {
       console.log('🔧 [CustomerTable] Calling CustomerService.list()...');
       
-      const response = await CustomerService.list();
+      const response = await CustomerService.list() as any;
       console.log('✅ [CustomerTable] API Response:', response);
       
       // ✅ Extract data từ response
-      let data = response.data || response;
+      const data = (response as any)?.data || response;
       
       console.log('✅ [CustomerTable] Final data:', data);
       console.log('✅ [CustomerTable] Data is array?', Array.isArray(data));
@@ -47,9 +47,10 @@ export default function CustomerTable() {
         setCustomers([]);
       }
       
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('❌ [CustomerTable] Error loading customers:', error);
-      setError(error.response?.data?.message || error.message || 'Failed to load customers');
+      const errorMessage = error instanceof Error ? error.message : 'Failed to load customers';
+      setError(errorMessage);
       setCustomers([]);
     } finally {
       setLoading(false);
@@ -64,9 +65,10 @@ export default function CustomerTable() {
       await CustomerService.remove(id);
       alert('✅ Customer deleted successfully.');
       loadCustomers();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to delete customer:', error);
-      alert('❌ Error deleting customer: ' + (error.response?.data?.message || error.message));
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      alert('❌ Error deleting customer: ' + errorMessage);
     }
   };
 

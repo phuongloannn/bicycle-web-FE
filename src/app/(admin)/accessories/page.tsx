@@ -27,7 +27,7 @@ const AccessoryService = {
     return response.json();
   },
 
-  async createAccessory(data: any): Promise<Accessory> {
+  async createAccessory(data: Record<string, unknown>): Promise<Accessory> {
     const response = await fetch(`${API_BASE_URL}/api/accessories`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -37,7 +37,7 @@ const AccessoryService = {
     return response.json();
   },
 
-  async updateAccessory(id: number, data: any): Promise<Accessory> {
+  async updateAccessory(id: number, data: Record<string, unknown>): Promise<Accessory> {
     const response = await fetch(`${API_BASE_URL}/api/accessories/${id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
@@ -259,7 +259,7 @@ export default function AccessoriesPage() {
           compatibleArray = [];
         }
       }
-    } catch (error) {
+    } catch {
       console.error('Error parsing compatible_with:', accessory.compatible_with);
       compatibleArray = [];
     }
@@ -325,7 +325,7 @@ export default function AccessoriesPage() {
       </div>
       {searchQuery && (
         <p className="mt-2 text-sm text-[#8B278C]">
-          Tìm thấy {accessories.length} phụ kiện phù hợp "{searchQuery}"
+          Tìm thấy {accessories.length} phụ kiện phù hợp &quot;{searchQuery}&quot;
         </p>
       )}
     </div>
@@ -635,7 +635,7 @@ export default function AccessoriesPage() {
                       compatibleBikes = [];
                     }
                   }
-                } catch (error) {
+                } catch {
                   console.error('Error parsing compatible_with:', accessory.compatible_with);
                   compatibleBikes = [];
                 }

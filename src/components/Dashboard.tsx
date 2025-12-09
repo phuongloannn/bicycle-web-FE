@@ -14,20 +14,6 @@ interface DashboardStats {
   conversionRate: number;
 }
 
-interface SalesChartData {
-  date: string;
-  revenue: number;
-  orders: number;
-  customers: number;
-}
-
-interface TopProduct {
-  id: number;
-  name: string;
-  sales: number;
-  revenue: number;
-  imageUrl: string;
-}
 
 const Dashboard = () => {
   const [stats, setStats] = useState<DashboardStats>({

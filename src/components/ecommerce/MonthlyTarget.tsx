@@ -25,7 +25,7 @@ const STATUS_ORDER: { key: string; label: string }[] = [
 
 export default function MonthlyTarget() {
   const [series, setSeries] = useState<number[]>([0, 0, 0, 0]);
-  const [stats, setStats] = useState<OrderStats | null>(null);
+  const [, setStats] = useState<OrderStats | null>(null);
   const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
@@ -99,7 +99,7 @@ export default function MonthlyTarget() {
     tooltip: {
       y: {
         formatter: function (val: number, opts?: any) {
-          const index = opts?.seriesIndex ?? 0;
+          const _index = opts?.seriesIndex ?? 0;
           const total = series.reduce((sum, v) => sum + v, 0) || 1;
           const percent = ((val / total) * 100).toFixed(2);
           return `${val.toFixed(2)}% (${percent}%)`;

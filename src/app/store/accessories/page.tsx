@@ -94,13 +94,7 @@ export default function AccessoriesStorePage() {
   // 🔥 ADD TO CART
   const handleAddToCart = async (accessory: Accessory) => {
     try {
-      await addToCart({
-        id: accessory.id,
-        name: accessory.name,
-        price: accessory.price,
-        image: accessory.image_url,
-        stock: accessory.in_stock
-      }, 1, "accessory");
+      await addToCart(accessory, 1, "accessory");
 
       alert(`Đã thêm ${accessory.name} vào giỏ hàng!`);
     } catch (error) {

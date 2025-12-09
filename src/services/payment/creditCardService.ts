@@ -13,7 +13,7 @@ export const creditCardService = {
     try {
       const response = await axios.post('/payments/credit-card', paymentData);
       return response.data;
-    } catch (error) {
+    } catch {
       throw new Error('Thanh toán thẻ tín dụng thất bại');
     }
   },
