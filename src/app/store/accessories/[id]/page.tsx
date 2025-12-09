@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { useCart } from "../../../../contexts/CartContext";
 
 // 🔥 ĐỊNH NGHĨA TYPE CHO ACCESSORY
 interface Accessory {

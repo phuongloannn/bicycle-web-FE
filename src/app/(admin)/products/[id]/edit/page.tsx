@@ -25,7 +25,7 @@ export default function EditOrderPage() {
         setLoading(true);
         const data = await orderService.getOrderById(orderId);
         setOrder(data);
-      } catch (error) {
+      } catch {
         setError('Không thể tải thông tin đơn hàng!');
       } finally {
         setLoading(false);
@@ -53,7 +53,7 @@ export default function EditOrderPage() {
       
       alert('✅ Cập nhật đơn hàng thành công!');
       router.push('/orders');
-    } catch (error) {
+    } catch {
       setError('Có lỗi xảy ra khi cập nhật đơn hàng!');
     } finally {
       setSubmitting(false);
@@ -236,8 +236,8 @@ export default function EditOrderPage() {
                         <div className="text-sm text-[#B673BF]">ID: {item.productId}</div>
                       </td>
                       <td className="px-4 py-3 text-[#8B278C]">{item.quantity}</td>
-                      <td className="px-4 py-3 text-[#8B278C]">{formatCurrency(item.unitPrice)}</td>
-                      <td className="px-4 py-3 font-medium text-[#8B278C]">{formatCurrency(item.totalPrice)}</td>
+                      <td className="px-4 py-3 text-[#8B278C]">{formatCurrency(Number(item.unitPrice))}</td>
+                      <td className="px-4 py-3 font-medium text-[#8B278C]">{formatCurrency(Number(item.totalPrice))}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -247,7 +247,7 @@ export default function EditOrderPage() {
             <div className="mt-4 flex justify-end">
               <div className="text-right text-[#8B278C]">
                 <p className="text-lg font-semibold">
-                  Tổng cộng: {formatCurrency(order.totalAmount)}
+                  Tổng cộng: {formatCurrency(Number(order.totalAmount))}
                 </p>
               </div>
             </div>

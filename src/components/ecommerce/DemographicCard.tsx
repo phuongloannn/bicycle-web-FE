@@ -20,7 +20,7 @@ interface ProductItemProps {
   formatCurrency: (amount: number) => string;
 }
 
-function ProductItem({ product, apiBase, formatCurrency }: ProductItemProps) {
+function ProductItem({ product, formatCurrency }: ProductItemProps) {
   const [imageError, setImageError] = useState(false);
 
   return (

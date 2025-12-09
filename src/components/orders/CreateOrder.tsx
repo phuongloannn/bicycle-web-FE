@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { CreateOrderRequest } from '@/types/order';
-import { orderService } from '@/services/orderService';
 
 interface CreateOrderProps {
   onSuccess: () => void;
@@ -201,7 +200,7 @@ const CreateOrder: React.FC<CreateOrderProps> = ({ onSuccess, onCancel }) => {
         try {
           const errorResponse = JSON.parse(responseText);
           errorMessage = errorResponse.message || errorResponse.error || errorMessage;
-        } catch (parseError) {
+        } catch {
           // Nếu không parse được JSON, dùng message mặc định
         }
         

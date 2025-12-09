@@ -73,7 +73,7 @@ export default function InventoryPage() {
     setError(null);
 
     try {
-      if (!form.productId || form.productId === '') {
+      if (!form.productId || form.productId === 0) {
         setError('Product is required');
         setSaving(false);
         return;

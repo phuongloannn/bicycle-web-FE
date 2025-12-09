@@ -16,7 +16,7 @@ interface CheckoutForm {
 }
 
 export default function CheckoutPage() {
-  const { state, checkout, clearCart, getCart } = useCart();
+  const { state, checkout, getCart } = useCart();
   const router = useRouter();
   
   const [form, setForm] = useState<CheckoutForm>({

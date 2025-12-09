@@ -3,8 +3,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
   Product,
-  CreateProductDto,
-  UpdateProductDto,
   getProducts,
   createProduct,
   updateProduct,
@@ -97,7 +95,7 @@ export default function ProductsPage() {
         imageFilename: uploadResult.filename,
       }));
       setImagePreview(uploadResult.url);
-    } catch (err) {
+    } catch {
       setError('Failed to upload image');
     } finally {
       setUploadingImage(false);
@@ -120,7 +118,7 @@ export default function ProductsPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    const productData: any = {
+    const productData = {
       name: formData.name,
       description: formData.description || undefined,
       price: parseFloat(formData.price),
@@ -212,7 +210,7 @@ export default function ProductsPage() {
       </div>
       {searchQuery && (
         <p className="mt-2 text-sm text-[#8B278C]">
-          Found {products.length} products matching "{searchQuery}"
+          Found {products.length} products matching &quot;{searchQuery}&quot;
         </p>
       )}
     </div>

@@ -15,12 +15,6 @@ export default function SignInForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  // ✅ NÚT TEST LOGIN
-  const testDirect = () => {
-    setEmail("admin@example.com");
-    setPassword("admin123");
-    handleSignIn();
-  };
 
   const handleSignIn = async () => {
     setLoading(true);

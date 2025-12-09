@@ -6,12 +6,9 @@ import { usePathname } from "next/navigation";
 import { useSidebar } from "../contexts/SidebarContext";
 import {
   BoxCubeIcon,
-  CalenderIcon,
   ChevronDownIcon,
   GridIcon,
   HorizontaLDots,
-  ListIcon,
-  PageIcon,
   PieChartIcon,
   PlugInIcon,
   TableIcon,
