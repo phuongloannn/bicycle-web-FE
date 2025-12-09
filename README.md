@@ -69,15 +69,21 @@ yarn install
 
 ### 3. Setup Environment Variables
 Create a `.env.local` file in the root directory and configure your API endpoint:
+
+**Backend Server Info:**
+- Public IP: `47.129.172.108`
+- Instance: `bike-shop-backend` (i-0200cdaf258f1f0aa)
+
+**Cho Local Development:**
 ```env
 # Backend API base URL (without trailing slash)
-NEXT_PUBLIC_API_BASE_URL=http://localhost:3000
+NEXT_PUBLIC_API_BASE_URL=http://47.129.172.108:3000
 ```
 
 **Lưu ý:**
+- Thay `3000` bằng port thực tế mà backend đang chạy (nếu khác)
 - Không thêm trailing slash (`/`) ở cuối URL
-- Cho production trên Vercel, sử dụng HTTPS: `https://api.yourdomain.com`
-- Xem file `ENV_SETUP.md` để biết cách cấu hình chi tiết cho production
+- Cho production trên Vercel, cần HTTPS và domain name (xem `ENV_GUIDE.md`)
 
 ### 4. Run the development server
 ```bash
