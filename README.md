@@ -70,8 +70,14 @@ yarn install
 ### 3. Setup Environment Variables
 Create a `.env.local` file in the root directory and configure your API endpoint:
 ```env
-NEXT_PUBLIC_API_URL=http://localhost:3000/api
+# Backend API base URL (without trailing slash)
+NEXT_PUBLIC_API_BASE_URL=http://localhost:3000
 ```
+
+**Lưu ý:**
+- Không thêm trailing slash (`/`) ở cuối URL
+- Cho production trên Vercel, sử dụng HTTPS: `https://api.yourdomain.com`
+- Xem file `ENV_SETUP.md` để biết cách cấu hình chi tiết cho production
 
 ### 4. Run the development server
 ```bash

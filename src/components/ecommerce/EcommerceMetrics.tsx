@@ -19,7 +19,7 @@ interface DashboardStats {
 }
 
 export const EcommerceMetrics = ({setIsLoading}: {setIsLoading: (isLoading: boolean) => void}) => {
-  const API_BASE = 'http://localhost:3000';
+  const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3000';
 
   const [stats, setStats] = useState<DashboardStats>({
     totalProducts: 0,

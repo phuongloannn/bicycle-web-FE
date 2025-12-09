@@ -1,5 +1,4 @@
 // src/services/orderService.ts
-import axios from 'axios';
 import {
   Order,
   CreateOrderRequest,
@@ -7,48 +6,41 @@ import {
   OrderStatus,
   OrderStats,
 } from '@/types/order';
-
-const API_BASE = 'http://localhost:3000';
+import { apiClient } from '@/lib/api/client';
 
 export const orderService = {
   // Lấy tất cả orders
   async getAllOrders(): Promise<Order[]> {
-    const response = await axios.get(`${API_BASE}/orders`);
-    return response.data;
+    return apiClient.get<Order[]>('/orders');
   },
 
   // Lấy order theo ID
   async getOrderById(id: number): Promise<Order> {
-    const response = await axios.get(`${API_BASE}/orders/${id}`);
-    return response.data;
+    return apiClient.get<Order>(`/orders/${id}`);
   },
 
   // Lấy orders theo status
   async getOrdersByStatus(status: OrderStatus): Promise<Order[]> {
-    const response = await axios.get(`${API_BASE}/orders/status/${status}`);
-    return response.data;
+    return apiClient.get<Order[]>(`/orders/status/${status}`);
   },
 
   // Tạo order mới - SỬA ĐỂ LINH HOẠT VỚI GUEST CHECKOUT
   async createOrder(orderData: CreateOrderRequest | any): Promise<Order> {
-    const response = await axios.post(`${API_BASE}/orders`, orderData);
-    return response.data;
+    return apiClient.post<Order>('/orders', orderData);
   },
 
   // Cập nhật order
   async updateOrder(id: number, orderData: UpdateOrderRequest): Promise<Order> {
-    const response = await axios.patch(`${API_BASE}/orders/${id}`, orderData);
-    return response.data;
+    return apiClient.patch<Order>(`/orders/${id}`, orderData);
   },
 
   // Xóa order
   async deleteOrder(id: number): Promise<void> {
-    await axios.delete(`${API_BASE}/orders/${id}`);
+    await apiClient.delete(`/orders/${id}`);
   },
 
   // Thống kê đơn hàng cho dashboard (bao gồm phân bố trạng thái)
   async getOrderStats(): Promise<OrderStats> {
-    const response = await axios.get<OrderStats>(`${API_BASE}/orders/stats`);
-    return response.data;
+    return apiClient.get<OrderStats>('/orders/stats');
   },
 };

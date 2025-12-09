@@ -21,7 +21,7 @@ const ReactApexChart = dynamic(() => import("react-apexcharts"), {
 });
 
 export default function MonthlySalesChart() {
-  const API_BASE = 'http://localhost:3000';
+  const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3000';
   const { theme } = useTheme();
   const [chartData, setChartData] = useState<SalesChartData[]>([]);
   const [loading, setLoading] = useState(true);

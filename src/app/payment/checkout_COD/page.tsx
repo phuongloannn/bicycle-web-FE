@@ -1,15 +1,11 @@
 'use client';
 
 import Link from 'next/link';
-import { useMemo } from 'react';
+import { useSearchParams } from 'next/navigation';
 
-export default function CheckoutCODSuccessPage({
-  searchParams
-}: {
-  searchParams: { orderId?: string }
-}) {
-  // ✅ Fix: dùng useMemo để unwrap searchParams
-  const orderId = useMemo(() => searchParams?.orderId, [searchParams]);
+export default function CheckoutCODSuccessPage() {
+  const searchParams = useSearchParams();
+  const orderId = searchParams.get('orderId');
 
   return (
     <div className="bg-white rounded-lg shadow-md p-8 text-center">

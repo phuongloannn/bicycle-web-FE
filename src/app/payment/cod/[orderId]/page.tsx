@@ -1,13 +1,11 @@
 'use client';
 
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 
-export default function CheckoutSuccessPage({
-  searchParams
-}: {
-  searchParams: { orderId?: string }
-}) {
-  const orderId = searchParams?.orderId;
+export default function CheckoutSuccessPage() {
+  const searchParams = useSearchParams();
+  const orderId = searchParams.get('orderId');
 
   return (
     <div className="bg-white rounded-lg shadow-md p-8 text-center">

@@ -10,6 +10,17 @@ const nextConfig: NextConfig = {
         port: "3000",
         pathname: "/uploads/**",
       },
+      // ✅ Hỗ trợ production backend domain
+      {
+        protocol: "https",
+        hostname: "**",
+        pathname: "/uploads/**",
+      },
+      {
+        protocol: "http",
+        hostname: "**",
+        pathname: "/uploads/**",
+      },
     ],
   },
 
