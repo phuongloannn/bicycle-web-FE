@@ -24,10 +24,11 @@ export default function CartPage() {
 
   // 🔹 Hàm xử lý URL ảnh
   const getImageUrl = (item: CartItem) => {
+    const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3000';
     if (!item.image) return '/no-image.png'; // ảnh mặc định nếu không có ảnh
     return item.image.startsWith('http')
       ? item.image
-      : `http://localhost:3000/uploads/${item.image}`;
+      : `${API_BASE_URL}/uploads/${item.image}`;
   };
 
   // 🔹 Update số lượng

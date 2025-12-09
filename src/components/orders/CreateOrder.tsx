@@ -44,7 +44,7 @@ const CreateOrder: React.FC<CreateOrderProps> = ({ onSuccess, onCancel }) => {
         setDataLoading(true);
         setError('');
         
-        const baseURL = 'http://localhost:3000';
+        const baseURL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3000';
         
         // ✅ LOAD CUSTOMERS TỪ API
         const customersResponse = await fetch(`${baseURL}/customers`, {
@@ -159,7 +159,7 @@ const CreateOrder: React.FC<CreateOrderProps> = ({ onSuccess, onCancel }) => {
     }
 
     try {
-      const baseURL = 'http://localhost:3000';
+      const baseURL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3000';
       
       // ✅ CONVERT TẤT CẢ SANG NUMBER
       const orderData = {

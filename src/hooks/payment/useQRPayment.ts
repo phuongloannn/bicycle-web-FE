@@ -19,7 +19,8 @@ export default function useQRPayment(orderId: number, totalAmount: number) {
     try {
       console.log('🔍 [useQRPayment] Generating QR for order:', orderId, 'amount:', totalAmount);
       
-      const response = await fetch(`http://localhost:3000/payment/bank-transfer/qr/${orderId}?amount=${totalAmount}`);
+      const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3000';
+      const response = await fetch(`${API_BASE_URL}/payment/bank-transfer/qr/${orderId}?amount=${totalAmount}`);
       
       if (!response.ok) {
         throw new Error(`Failed to generate QR: ${response.status}`);

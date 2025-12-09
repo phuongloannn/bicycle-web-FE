@@ -20,15 +20,17 @@ interface Accessory {
 }
 
 // 🔥 API SERVICE
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3000';
+
 const AccessoryService = {
   async getAccessory(id: number): Promise<Accessory> {
-    const response = await fetch(`http://localhost:3000/api/accessories/${id}`);
+    const response = await fetch(`${API_BASE_URL}/api/accessories/${id}`);
     if (!response.ok) throw new Error('Failed to fetch accessory');
     return response.json();
   },
 
   async getAccessories(): Promise<Accessory[]> {
-    const response = await fetch('http://localhost:3000/api/accessories');
+    const response = await fetch(`${API_BASE_URL}/api/accessories`);
     if (!response.ok) throw new Error('Failed to fetch accessories');
     return response.json();
   }
@@ -79,7 +81,7 @@ export default function AccessoryDetailPage() {
   const processImageUrl = (url: string | null): string => {
     if (!url) return '/images/placeholder-product.jpg';
     if (url.startsWith('http')) return url;
-    if (url.startsWith('/uploads/')) return `http://localhost:3000${url}`;
+    if (url.startsWith('/uploads/')) return `${API_BASE_URL}${url}`;
     return '/images/placeholder-product.jpg';
   };
 

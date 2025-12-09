@@ -28,11 +28,11 @@ export default function CustomerForm({ id }: CustomerFormProps) {
       setError('');
       try {
         console.log('📡 Fetching customer with ID:', id);
-        const response = await CustomerService.get(id);
+        const response = await CustomerService.get(id) as any;
         console.log('✅ Full API Response:', response);
         
         // ✅ FIX: Extract data from response
-        const customerData = response.data || response;
+        const customerData = (response as any)?.data || response;
         console.log('📦 Customer Data:', customerData);
         
         setForm({

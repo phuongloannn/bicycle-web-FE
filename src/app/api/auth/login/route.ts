@@ -1,6 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_API_BASE_URL?.replace('/api', '') || 'http://127.0.0.1:3000';
+// ✅ Get backend URL, remove trailing slash and /api if present
+const getBackendURL = () => {
+  const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3000';
+  // Remove trailing slash
+  let url = apiBase.replace(/\/$/, '');
+  // Remove /api suffix if present (some configs might have it)
+  url = url.replace(/\/api$/, '');
+  return url;
+};
+
+const BACKEND_URL = getBackendURL();
 
 export async function POST(request: NextRequest) {
   try {

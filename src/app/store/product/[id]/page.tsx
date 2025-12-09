@@ -44,9 +44,10 @@ export default function ProductDetailPage() {
 
   // 🔹 XỬ LÝ URL ẢNH
   const processImageUrl = (url: string | null): string => {
+    const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3000';
     if (!url) return '/images/placeholder-product.jpg';
     if (url.startsWith('http')) return url;
-    if (url.startsWith('/uploads/')) return `http://localhost:3000${url}`;
+    if (url.startsWith('/uploads/')) return `${API_BASE_URL}${url}`;
     return '/images/placeholder-product.jpg';
   };
 
@@ -64,7 +65,8 @@ export default function ProductDetailPage() {
 
         // 🧩 LOAD THÔNG SỐ KỸ THUẬT
         try {
-          const specResponse = await fetch(`http://localhost:3000/product-specifications/product/${productId}`);
+          const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3000';
+          const specResponse = await fetch(`${API_BASE_URL}/product-specifications/product/${productId}`);
           if (specResponse.ok) {
             const specData = await specResponse.json();
             setSpecifications(specData);

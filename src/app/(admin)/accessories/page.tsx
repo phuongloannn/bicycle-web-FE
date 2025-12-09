@@ -18,15 +18,17 @@ interface Accessory {
 }
 
 // 🔥 API SERVICE CHO ACCESSORIES
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3000';
+
 const AccessoryService = {
   async getAccessories(): Promise<Accessory[]> {
-    const response = await fetch('http://localhost:3000/api/accessories');
+    const response = await fetch(`${API_BASE_URL}/api/accessories`);
     if (!response.ok) throw new Error('Failed to fetch accessories');
     return response.json();
   },
 
   async createAccessory(data: any): Promise<Accessory> {
-    const response = await fetch('http://localhost:3000/api/accessories', {
+    const response = await fetch(`${API_BASE_URL}/api/accessories`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
@@ -36,7 +38,7 @@ const AccessoryService = {
   },
 
   async updateAccessory(id: number, data: any): Promise<Accessory> {
-    const response = await fetch(`http://localhost:3000/api/accessories/${id}`, {
+    const response = await fetch(`${API_BASE_URL}/api/accessories/${id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
@@ -46,7 +48,7 @@ const AccessoryService = {
   },
 
   async deleteAccessory(id: number): Promise<void> {
-    const response = await fetch(`http://localhost:3000/api/accessories/${id}`, {
+    const response = await fetch(`${API_BASE_URL}/api/accessories/${id}`, {
       method: 'DELETE',
     });
     if (!response.ok) throw new Error('Failed to delete accessory');
@@ -56,7 +58,7 @@ const AccessoryService = {
     const formData = new FormData();
     formData.append('image', file);
     
-    const response = await fetch('http://localhost:3000/api/accessories/upload-image', {
+    const response = await fetch(`${API_BASE_URL}/api/accessories/upload-image`, {
       method: 'POST',
       body: formData,
     });
@@ -70,7 +72,7 @@ const AccessoryService = {
   },
 
   async searchAccessories(query: string): Promise<Accessory[]> {
-    const response = await fetch(`http://localhost:3000/api/accessories/search?q=${encodeURIComponent(query)}`);
+    const response = await fetch(`${API_BASE_URL}/api/accessories/search?q=${encodeURIComponent(query)}`);
     if (!response.ok) throw new Error('Failed to search accessories');
     return response.json();
   }

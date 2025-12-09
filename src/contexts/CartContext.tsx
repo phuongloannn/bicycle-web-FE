@@ -2,6 +2,8 @@
 'use client';
 import { createContext, useContext, useReducer, ReactNode, useEffect, useCallback } from 'react';
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3000';
+
 // 🔥 UPDATED: ADD ACCESSORY INTERFACE
 export interface Product {
   id: number;
@@ -222,9 +224,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
     
     if (!imageUrl) return placeholder;
     if (imageUrl.startsWith('http')) return imageUrl;
-    if (imageUrl.startsWith('/')) return `http://localhost:3000${imageUrl}`;
+    if (imageUrl.startsWith('/')) return `${API_BASE_URL}${imageUrl}`;
     
-    return `http://localhost:3000/${imageUrl}`;
+    return `${API_BASE_URL}/${imageUrl}`;
   };
 
   // ✅ UPDATED: ADD TO CART - SUPPORT BOTH PRODUCTS AND ACCESSORIES
@@ -376,7 +378,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       switch (paymentMethod) {
         case 'COD':
           // ✅ COD - Chỉ cần cập nhật trạng thái đơn hàng
-          paymentResult = await fetch(`http://localhost:3000/orders/${orderId}/payment`, {
+          paymentResult = await fetch(`${API_BASE_URL}/orders/${orderId}/payment`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -399,7 +401,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   console.log('💰 Bank Transfer Payload:', bankTransferPayload);
 
-  paymentResult = await fetch(`http://localhost:3000/payment/bank-transfer/${orderId}`, {
+  paymentResult = await fetch(`${API_BASE_URL}/payment/bank-transfer/${orderId}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(bankTransferPayload)
@@ -423,10 +425,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
             amount: state.total,
             orderInfo: `Thanh toán đơn hàng ${orderId}`,
             returnUrl: `${window.location.origin}/payment/success`,
-            notifyUrl: 'http://localhost:3000/payment/momo/callback'
+            notifyUrl: `${API_BASE_URL}/payment/momo/callback`
           };
 
-          paymentResult = await fetch('http://localhost:3000/payment/momo/create', {
+          paymentResult = await fetch(`${API_BASE_URL}/payment/momo/create`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(momoPayload)
@@ -452,7 +454,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
             language: 'vn'
           };
 
-          paymentResult = await fetch('http://localhost:3000/payment/vnpay/create', {
+          paymentResult = await fetch(`${API_BASE_URL}/payment/vnpay/create`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(vnpayPayload)
@@ -483,7 +485,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
             }
           };
 
-          paymentResult = await fetch('http://localhost:3000/payment/card/process', {
+          paymentResult = await fetch(`${API_BASE_URL}/payment/card/process`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(cardPayload)
@@ -542,7 +544,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       console.log(`🔍 Kiểm tra customer tồn tại với email: ${customerInfo.email}`);
       
       try {
-        const existCustomerResponse = await fetch(`http://localhost:3000/customers/bymail/${customerInfo.email}`, {
+        const existCustomerResponse = await fetch(`${API_BASE_URL}/customers/bymail/${customerInfo.email}`, {
           method: 'GET',
           headers: { 'Content-Type': 'application/json' }
         });
@@ -561,7 +563,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
             
             // ✅ CẬP NHẬT THÔNG TIN CUSTOMER NẾU CẦN
             console.log('🔄 Cập nhật thông tin customer...');
-            const updateResponse = await fetch(`http://localhost:3000/customers/${customerId}`, {
+            const updateResponse = await fetch(`${API_BASE_URL}/customers/${customerId}`, {
               method: 'PATCH',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
@@ -578,7 +580,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
           } else {
             // ✅ CUSTOMER CHƯA TỒN TẠI (data: null) - TẠO CUSTOMER MỚI
             console.log('🔄 Customer chưa tồn tại (data: null), tạo customer mới...');
-            const newCustomerResponse = await fetch('http://localhost:3000/customers', {
+            const newCustomerResponse = await fetch(`${API_BASE_URL}/customers`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
@@ -636,7 +638,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       console.log('🔄 Creating order with data:', orderData);
       
       // ✅ GỬI REQUEST TẠO ORDER
-      const orderResponse = await fetch('http://localhost:3000/orders', {
+      const orderResponse = await fetch(`${API_BASE_URL}/orders`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(orderData)

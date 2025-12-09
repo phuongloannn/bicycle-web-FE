@@ -2,11 +2,12 @@
 
 import React, { useState, useEffect } from 'react';
 import { orderService } from '@/services/orderService';
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import { Order, OrderStatus } from '@/types/order';
 
-export default function EditOrderPage({ params }: { params: { id: string } }) {
+export default function EditOrderPage() {
   const router = useRouter();
+  const params = useParams();
   const orderId = Number(params.id);
 
   if (isNaN(orderId)) {
