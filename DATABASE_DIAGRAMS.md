@@ -1,25 +1,85 @@
+
 # Database Diagrams
 
-## Entity Relationship Diagram (ERD)
+Dưới đây là mô hình cơ sở dữ liệu cho dự án `sms_demo-3.sql`, bao gồm:
+1. **Mô hình ER (Entity-Relationship - Mức khái niệm)**: Tập trung vào các thực thể và mối quan hệ nghiệp vụ.
+2. **Mô hình ERD (Entity-Relationship Diagram - Mức vật lý)**: Chi tiết cấu trúc bảng, kiểu dữ liệu và khóa ngoại.
+
+---
+
+## 1. Mô hình ER (Conceptual Model)
+
+Mô hình này mô tả các thực thể chính và mối quan hệ giữa chúng bằng ký pháp Chen (giả lập) để dễ hình dung logic nghiệp vụ.
+
+```mermaid
+flowchart TD
+    %% Styling
+    classDef entity fill:#e1f5fe,stroke:#01579b,stroke-width:2px;
+    classDef relation fill:#fce4ec,stroke:#880e4f,stroke-width:2px,shape:rhombus;
+    classDef attribute fill:#fff,stroke:#333,stroke-dasharray: 5 5;
+
+    %% Entities
+    User[User]:::entity
+    Customer[Customer]:::entity
+    Product[Product]:::entity
+    Order[Order]:::entity
+    Category[Category]:::entity
+    Cart[Cart]:::entity
+    Inventory[Inventory]:::entity
+    Payment[Payment]:::entity
+    Accessory[Accessory]:::entity
+    Spec[Specification]:::entity
+
+    %% Relationships
+    Place{Places}:::relation
+    Contain{Contains}:::relation
+    Belong{Belongs To}:::relation
+    Has{Has}:::relation
+    Pay{Paid By}:::relation
+    Categorize{Categorizes}:::relation
+    Stock{Stocked In}:::relation
+    SpecRel{Has Specs}:::relation
+
+    %% Connections
+    Customer --- Place --- Order
+    Order --- Contain --- Product
+    User --- Has --- Cart
+    Cart --- Contain --- Product
+    Product --- Belong --- Category
+    Accessory --- Belong --- Category
+    Product --- Stock --- Inventory
+    Product --- SpecRel --- Spec
+    Order --- Pay --- Payment
+
+    %% Sub-relationships for Payments
+    Payment -.-> BankTransfer[Bank Transfer]
+    Payment -.-> COD[COD]
+    Payment -.-> CreditCard[Credit Card]
+```
+
+---
+
+## 2. Mô hình ERD (Physical Model)
+
+Mô hình này phản ánh chính xác 100% cấu trúc file `sms_demo-3.sql`, bao gồm tên cột (case-sensitive), kiểu dữ liệu và các mối quan hệ khóa ngoại (Foreign Keys).
 
 ```mermaid
 erDiagram
-    %% Entities
-    USERS {
+    users {
         int id PK
         string password
-        enum role
+        enum role "Admin, User"
         string email
         string name
         datetime createdAt
         datetime updatedAt
     }
 
-    CUSTOMERS {
+    customers {
         int id PK
         string name
         string email
-        boolean is_guest
+        tinyint is_guest
         string temporary_token
         datetime guest_expires_at
         string phone
@@ -28,30 +88,30 @@ erDiagram
         datetime updated_at
     }
 
-    CATEGORIES {
+    categories {
         int id PK
         string name
         string slug
         int parent_id
         string thumbnail
-        boolean is_active
+        tinyint is_active
         datetime created_at
         datetime updated_at
     }
 
-    PRODUCTS {
+    products {
         int id PK
         string name
-        string description
+        text description
         string sku
         string brand
         year model_year
-        json color_options
+        longtext color_options
         decimal price
         int stock
         string category
         string bike_type
-        json attributes
+        longtext attributes
         string image_url
         datetime createdAt
         datetime updatedAt
@@ -59,34 +119,22 @@ erDiagram
         int category_id FK
     }
 
-    BIKE_ACCESSORIES {
+    bike_accessories {
         int id PK
         string name
-        string description
+        text description
         decimal price
         string category
-        json compatible_with
-        boolean in_stock
+        longtext compatible_with
+        tinyint in_stock
         string image_url
         string image_filename
-        datetime created_at
-        datetime updated_at
+        timestamp created_at
+        timestamp updated_at
         int category_id FK
     }
 
-    INVENTORY {
-        int id PK
-        int product_id FK
-        int category_id FK
-        int quantity
-        int reserved
-        int min_stock
-        string location
-        datetime created_at
-        datetime updated_at
-    }
-
-    CARTS {
+    carts {
         int id PK
         int userId FK
         string sessionId
@@ -97,33 +145,33 @@ erDiagram
         timestamp updatedAt
     }
 
-    ORDERS {
+    orders {
         int id PK
-        int customer_id
+        int customer_id "Legacy/Internal ID"
         string guest_session_id
-        boolean is_guest_order
+        tinyint is_guest_order
         datetime order_date
-        enum status
+        enum status "Pending, Paid, Shipped, Canceled"
         decimal totalAmount
         int created_by FK
         datetime created_at
-        int customerId FK
+        int customerId FK "Main Customer Link"
         string orderNumber
-        string shipping_address
-        string billing_address
+        text shipping_address
+        text billing_address
         string payment_method
-        boolean is_paid
+        tinyint is_paid
         timestamp paid_at
         string phone
         string email
-        string customer_notes
-        string cancellation_reason
+        text customer_notes
+        text cancellation_reason
         timestamp completed_at
         timestamp cancelled_at
         timestamp updated_at
     }
 
-    ORDER_ITEMS {
+    order_items {
         int id PK
         int orderId FK
         int productId FK
@@ -132,12 +180,12 @@ erDiagram
         decimal totalPrice
         datetime createdAt
         datetime updatedAt
-        enum type
+        enum type "product, accessory"
     }
 
-    PAYMENTS {
+    payments {
         int id PK
-        int order_id
+        int order_id FK
         enum payment_method
         decimal amount
         enum status
@@ -147,7 +195,7 @@ erDiagram
         timestamp updated_at
     }
 
-    BANK_TRANSFERS {
+    bank_transfers {
         int id PK
         int payment_id FK
         string bank_name
@@ -160,13 +208,47 @@ erDiagram
         timestamp updated_at
     }
 
-    PRODUCT_CATEGORIES {
+    bank_transfer_payments {
+        int id PK
+        int payment_id FK
+        string bank_name
+        string account_number
+        string transfer_proof_url
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    cod_payments {
+        int id PK
+        int payment_id FK
+        int shipper_id
+        decimal received_amount
+        timestamp received_date
+    }
+
+    credit_card_payments {
+        int id PK
+        int payment_id FK
+        string card_holder_name
+        string card_number_last4
+        string card_type
+        timestamp transaction_date
+        string authorization_code
+    }
+
+    inventory {
         int id PK
         int product_id FK
         int category_id FK
+        int quantity
+        int reserved
+        int min_stock
+        string location
+        datetime created_at
+        datetime updated_at
     }
 
-    PRODUCT_SPECIFICATIONS {
+    product_specifications {
         int id PK
         int product_id FK
         string frame_size
@@ -179,7 +261,7 @@ erDiagram
         timestamp updated_at
     }
 
-    TEST_RIDE_SCHEDULES {
+    test_ride_schedules {
         int id PK
         int product_id FK
         string customer_name
@@ -187,159 +269,41 @@ erDiagram
         string customer_email
         datetime scheduled_date
         enum status
-        string notes
+        text notes
         timestamp created_at
         timestamp updated_at
     }
 
-    %% Relationships
-    USERS ||--o{ CARTS : "has"
-    PRODUCTS ||--o{ CARTS : "contained in"
-    CATEGORIES ||--o{ PRODUCTS : "categorizes"
-    CATEGORIES ||--o{ BIKE_ACCESSORIES : "categorizes"
-    CATEGORIES ||--o{ INVENTORY : "categorizes"
-    PRODUCTS ||--o{ INVENTORY : "stocked as"
-    CUSTOMERS ||--o{ ORDERS : "places"
-    USERS ||--o{ ORDERS : "manages"
-    ORDERS ||--|{ ORDER_ITEMS : "contains"
-    PRODUCTS ||--o{ ORDER_ITEMS : "listed in"
-    ORDERS ||--o{ PAYMENTS : "paid by"
-    PAYMENTS ||--o{ BANK_TRANSFERS : "details"
-    PRODUCTS ||--o{ PRODUCT_CATEGORIES : "belongs to"
-    CATEGORIES ||--o{ PRODUCT_CATEGORIES : "contains"
-    PRODUCTS ||--o| PRODUCT_SPECIFICATIONS : "has"
-    PRODUCTS ||--o{ TEST_RIDE_SCHEDULES : "booked for"
-```
+    %% --- RELATIONSHIPS (FK Constraints) ---
 
-## Class Diagram
+    %% Users & Carts
+    users ||--o{ carts : "owns"
+    products ||--o{ carts : "added_to"
 
-```mermaid
-classDiagram
-    class Users {
-        +int id
-        +string password
-        +enum role
-        +string email
-        +string name
-        +datetime createdAt
-        +datetime updatedAt
-    }
+    %% Orders Relationships
+    customers ||--o{ orders : "places (customerId)"
+    users ||--o{ orders : "creates (created_by)"
+    
+    %% Order Items
+    orders ||--o{ order_items : "contains"
+    products ||--o{ order_items : "is_item"
 
-    class Customers {
-        +int id
-        +string name
-        +string email
-        +boolean is_guest
-        +string phone
-        +string address
-        +datetime created_at
-        +datetime updated_at
-    }
+    %% Payments
+    orders ||--o{ payments : "has_payment"
+    payments ||--o{ bank_transfers : "details"
+    payments ||--o{ bank_transfer_payments : "details"
+    payments ||--o{ cod_payments : "details"
+    payments ||--o{ credit_card_payments : "details"
 
-    class Products {
-        +int id
-        +string name
-        +string description
-        +string sku
-        +string brand
-        +year model_year
-        +decimal price
-        +int stock
-        +string category
-        +json attributes
-        +string image_url
-        +int category_id
-    }
+    %% Categories & Products hierarchy
+    categories ||--o{ products : "categorizes"
+    categories ||--o{ bike_accessories : "categorizes"
+    categories ||--o{ inventory : "categorizes"
+    categories ||--o{ product_categories : "relates"
 
-    class BikeAccessories {
-        +int id
-        +string name
-        +decimal price
-        +string category
-        +boolean in_stock
-        +string image_url
-        +int category_id
-    }
-
-    class Categories {
-        +int id
-        +string name
-        +string slug
-        +int parent_id
-        +string thumbnail
-        +boolean is_active
-    }
-
-    class Orders {
-        +int id
-        +int customerId
-        +string orderNumber
-        +enum status
-        +decimal totalAmount
-        +int created_by
-        +string shipping_address
-        +string billing_address
-        +string payment_method
-        +boolean is_paid
-    }
-
-    class OrderItems {
-        +int id
-        +int orderId
-        +int productId
-        +int quantity
-        +decimal unitPrice
-        +decimal totalPrice
-        +enum type
-    }
-
-    class Payments {
-        +int id
-        +int order_id
-        +enum payment_method
-        +decimal amount
-        +enum status
-    }
-
-    class Inventory {
-        +int id
-        +int product_id
-        +int category_id
-        +int quantity
-        +string location
-    }
-
-    class Carts {
-        +int id
-        +int userId
-        +int productId
-        +int quantity
-        +decimal price
-    }
-
-    class ProductSpecifications {
-        +int id
-        +int product_id
-        +string frame_size
-        +string wheel_size
-        +string gear_system
-    }
-
-    class TestRideSchedules {
-        +int id
-        +int product_id
-        +string customer_name
-        +datetime scheduled_date
-        +enum status
-    }
-
-    Users "1" -- "*" Carts : has
-    Products "1" -- "*" Carts : in
-    Customers "1" -- "*" Orders : places
-    Orders "1" -- "*" OrderItems : contains
-    Products "1" -- "*" OrderItems : part of
-    Products "1" -- "*" Inventory : stores
-    Categories "1" -- "*" Products : classifies
-    Orders "1" -- "*" Payments : has
-    Products "1" -- "1" ProductSpecifications : defines
+    %% Product Details
+    products ||--o{ product_specifications : "has_specs"
+    products ||--o{ inventory : "has_stock"
+    products ||--o{ test_ride_schedules : "scheduled_for"
+    products ||--o{ product_categories : "in_category"
 ```
